@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { BootAnimation } from "@/components/notion-os/boot-animation"
+import { motion, AnimatePresence } from "framer-motion"
+import { BootScreen } from "@/components/notion-os/boot-screen"
 import { Navbar } from "@/components/notion-os/navbar"
 import { HeroSection } from "@/components/notion-os/hero-section"
 import { AgentsSection } from "@/components/notion-os/agents-section"
@@ -20,26 +21,32 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {!bootComplete && <BootAnimation onComplete={() => setBootComplete(true)} />}
+      <BootScreen onComplete={() => setBootComplete(true)} />
       
-      {bootComplete && (
-        <>
-          <AnimatedBackground />
-          <CursorGlow />
-          <Navbar />
-          <main>
-            <HeroSection />
-            <AgentsSection />
-            <AISection />
-            <FeaturesSection />
-            <SecondBrainSection />
-            <TestimonialsSection />
-            <CTASection />
-          </main>
-          <Footer />
-          <VoiceTour />
-        </>
-      )}
+      <AnimatePresence>
+        {bootComplete && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98, filter: "blur(10px)" }}
+            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          >
+            <AnimatedBackground />
+            <CursorGlow />
+            <Navbar />
+            <main>
+              <HeroSection />
+              <AgentsSection />
+              <AISection />
+              <FeaturesSection />
+              <SecondBrainSection />
+              <TestimonialsSection />
+              <CTASection />
+            </main>
+            <Footer />
+            <VoiceTour />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
