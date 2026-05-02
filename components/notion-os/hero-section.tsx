@@ -131,29 +131,53 @@ export function HeroSection({ onVoiceTour }: { onVoiceTour?: () => void }) {
           ))}
         </motion.div>
 
-        {/* Hero visual */}
+        {/* Hero Video */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1 }}
           className="mt-16 relative"
         >
-          <div className="glass-card rounded-2xl p-1 glow-primary max-w-4xl mx-auto">
-            <div className="bg-card rounded-xl overflow-hidden">
-              <div className="aspect-video bg-gradient-to-br from-muted to-card flex items-center justify-center">
-                <div className="text-center">
-                  <motion.div
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto mb-4"
-                  >
-                    <Sparkles className="h-10 w-10 text-primary-foreground" />
-                  </motion.div>
-                  <p className="text-muted-foreground">Interactive workspace preview</p>
-                </div>
+          <div className="glass-card rounded-2xl p-1 glow-primary max-w-5xl mx-auto">
+            <div className="bg-card rounded-xl overflow-hidden relative">
+              {/* Video glow effect */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 rounded-xl blur-xl opacity-50" />
+              <div className="relative aspect-video">
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover rounded-xl"
+                  poster="/video-poster.jpg"
+                >
+                  <source 
+                    src="https://videos.ctfassets.net/spoqsaf9291f/1EL7UZIXfcqngxsNSbL8tR/a35c698ae3499345013792fe78804a38/web-homepage-hero-1920x1200_final.mp4" 
+                    type="video/mp4" 
+                  />
+                  Your browser does not support the video tag.
+                </video>
+                {/* Video overlay gradient for depth */}
+                <div className="absolute inset-0 bg-gradient-to-t from-background/20 via-transparent to-transparent pointer-events-none rounded-xl" />
               </div>
             </div>
           </div>
+          
+          {/* Floating interaction hint */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 2 }}
+            className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 text-sm text-muted-foreground"
+          >
+            <motion.div
+              animate={{ y: [0, -4, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              <Sparkles className="h-4 w-4 text-primary" />
+            </motion.div>
+            <span>See Notion in action</span>
+          </motion.div>
         </motion.div>
       </div>
     </section>
