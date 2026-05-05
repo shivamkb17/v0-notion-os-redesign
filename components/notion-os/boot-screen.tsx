@@ -576,8 +576,8 @@ export function BootScreen({ onComplete }: BootScreenProps) {
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="relative"
             >
-              <div className="h-24 w-24 rounded-2xl bg-gradient-to-br from-cyan-400 via-purple-500 to-pink-500 flex items-center justify-center shadow-2xl shadow-purple-500/30">
-                <span className="text-4xl font-bold text-white">N</span>
+              <div className="h-24 w-24 rounded-2xl bg-white flex items-center justify-center shadow-2xl shadow-purple-500/30 p-3">
+                <img src="/notion-logo.svg" alt="Notion" className="w-full h-full" />
               </div>
               <motion.div
                 className="absolute -inset-3 rounded-3xl"
