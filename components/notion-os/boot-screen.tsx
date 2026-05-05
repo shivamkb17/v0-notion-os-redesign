@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Volume2, VolumeX, Zap, Cpu, Database, Wifi, Shield, Terminal } from "lucide-react"
+import { Volume2, Zap, Cpu, Database, Wifi, Shield, Terminal } from "lucide-react"
 
 const BOOT_MESSAGES = [
   { text: "Initializing Notion OS...", icon: Terminal, color: "cyan" },
@@ -26,17 +26,32 @@ interface BootScreenProps {
 class GlitchSoundEngine {
   private audioContext: AudioContext | null = null
   private gainNode: GainNode | null = null
+  public initialized = false
 
-  init() {
-    if (typeof window === "undefined") return
-    this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-    this.gainNode = this.audioContext.createGain()
-    this.gainNode.connect(this.audioContext.destination)
-    this.gainNode.gain.value = 0.15
+  async init(): Promise<boolean> {
+    if (this.initialized) return true
+    if (typeof window === "undefined") return false
+    
+    try {
+      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      
+      // Resume if suspended (required for some browsers)
+      if (this.audioContext.state === "suspended") {
+        await this.audioContext.resume()
+      }
+      
+      this.gainNode = this.audioContext.createGain()
+      this.gainNode.connect(this.audioContext.destination)
+      this.gainNode.gain.value = 0.15
+      this.initialized = true
+      return true
+    } catch {
+      return false
+    }
   }
 
   playGlitch() {
-    if (!this.audioContext || !this.gainNode) return
+    if (!this.audioContext || !this.gainNode || !this.initialized) return
     
     const duration = 0.08 + Math.random() * 0.12
     const osc = this.audioContext.createOscillator()
@@ -45,16 +60,13 @@ class GlitchSoundEngine {
     osc.connect(oscGain)
     oscGain.connect(this.gainNode)
     
-    // Random glitch frequency
     osc.frequency.value = 100 + Math.random() * 800
     osc.type = ["square", "sawtooth", "triangle"][Math.floor(Math.random() * 3)] as OscillatorType
     
-    // Frequency modulation for glitchy effect
     const now = this.audioContext.currentTime
     osc.frequency.setValueAtTime(osc.frequency.value, now)
     osc.frequency.exponentialRampToValueAtTime(50 + Math.random() * 200, now + duration)
     
-    // Quick attack and decay
     oscGain.gain.setValueAtTime(0, now)
     oscGain.gain.linearRampToValueAtTime(0.3, now + 0.01)
     oscGain.gain.exponentialRampToValueAtTime(0.001, now + duration)
@@ -64,7 +76,7 @@ class GlitchSoundEngine {
   }
 
   playBootSound() {
-    if (!this.audioContext || !this.gainNode) return
+    if (!this.audioContext || !this.gainNode || !this.initialized) return
     
     const now = this.audioContext.currentTime
     
@@ -96,7 +108,7 @@ class GlitchSoundEngine {
   }
 
   playTypeSound() {
-    if (!this.audioContext || !this.gainNode) return
+    if (!this.audioContext || !this.gainNode || !this.initialized) return
     
     const osc = this.audioContext.createOscillator()
     const gain = this.audioContext.createGain()
@@ -116,12 +128,10 @@ class GlitchSoundEngine {
   }
 
   playLineComplete() {
-    if (!this.audioContext || !this.gainNode) return
+    if (!this.audioContext || !this.gainNode || !this.initialized) return
     
     const now = this.audioContext.currentTime
-    
-    // Success chime
-    const frequencies = [523.25, 659.25, 783.99] // C5, E5, G5
+    const frequencies = [523.25, 659.25, 783.99]
     frequencies.forEach((freq, i) => {
       const osc = this.audioContext!.createOscillator()
       const gain = this.audioContext!.createGain()
@@ -141,12 +151,10 @@ class GlitchSoundEngine {
   }
 
   playBootComplete() {
-    if (!this.audioContext || !this.gainNode) return
+    if (!this.audioContext || !this.gainNode || !this.initialized) return
     
     const now = this.audioContext.currentTime
-    
-    // Ascending arpeggio
-    const frequencies = [261.63, 329.63, 392.00, 523.25, 659.25] // C4, E4, G4, C5, E5
+    const frequencies = [261.63, 329.63, 392.00, 523.25, 659.25]
     frequencies.forEach((freq, i) => {
       const osc = this.audioContext!.createOscillator()
       const gain = this.audioContext!.createGain()
@@ -180,8 +188,7 @@ export function BootScreen({ onComplete }: BootScreenProps) {
   const [showCursor, setShowCursor] = useState(true)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [bootComplete, setBootComplete] = useState(false)
-  const [voiceState, setVoiceState] = useState<"idle" | "loading" | "playing" | "done" | "error">("idle")
-  const [showAudioPrompt, setShowAudioPrompt] = useState(false)
+  const [voiceState, setVoiceState] = useState<"idle" | "loading" | "playing" | "done">("idle")
   const [audioInitialized, setAudioInitialized] = useState(false)
   const [glitchActive, setGlitchActive] = useState(false)
   const [systemStats, setSystemStats] = useState({ cpu: 0, memory: 0, network: 0 })
@@ -192,47 +199,57 @@ export function BootScreen({ onComplete }: BootScreenProps) {
   const voiceTriggeredRef = useRef(false)
   const glitchEngineRef = useRef<GlitchSoundEngine | null>(null)
   const particleIdRef = useRef(0)
+  const glitchIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const initAttemptedRef = useRef(false)
 
-  // Initialize audio engine on first user interaction
-  const initAudio = useCallback(() => {
-    if (audioInitialized || typeof window === "undefined") return
+  // Initialize audio engine
+  const initAudio = useCallback(async () => {
+    if (audioInitialized || initAttemptedRef.current) return
+    initAttemptedRef.current = true
     
-    glitchEngineRef.current = new GlitchSoundEngine()
-    glitchEngineRef.current.init()
-    setAudioInitialized(true)
-    
-    // Play initial boot sound
-    glitchEngineRef.current.playBootSound()
-    
-    // Start glitch sequence
-    const glitchInterval = setInterval(() => {
-      if (glitchEngineRef.current && Math.random() > 0.6) {
-        glitchEngineRef.current.playGlitch()
-        setGlitchActive(true)
-        setTimeout(() => setGlitchActive(false), 100)
-      }
-    }, 200)
-    
-    return () => clearInterval(glitchInterval)
-  }, [audioInitialized])
-
-  // Handle click to initialize audio
-  useEffect(() => {
-    const handleInteraction = () => {
-      initAudio()
-      document.removeEventListener("click", handleInteraction)
-      document.removeEventListener("keydown", handleInteraction)
-      document.removeEventListener("touchstart", handleInteraction)
+    if (!glitchEngineRef.current) {
+      glitchEngineRef.current = new GlitchSoundEngine()
     }
     
-    document.addEventListener("click", handleInteraction)
-    document.addEventListener("keydown", handleInteraction)
-    document.addEventListener("touchstart", handleInteraction)
+    const success = await glitchEngineRef.current.init()
+    if (success) {
+      setAudioInitialized(true)
+      
+      // Play initial boot sound
+      glitchEngineRef.current.playBootSound()
+      
+      // Start glitch sequence
+      glitchIntervalRef.current = setInterval(() => {
+        if (glitchEngineRef.current?.initialized && Math.random() > 0.6) {
+          glitchEngineRef.current.playGlitch()
+          setGlitchActive(true)
+          setTimeout(() => setGlitchActive(false), 100)
+        }
+      }, 200)
+    }
+  }, [audioInitialized])
+
+  // Try to auto-init audio on mount, and listen for ANY interaction
+  useEffect(() => {
+    // Attempt auto-init (will work if user has interacted with page before)
+    initAudio()
+    
+    // Listen for any user interaction to enable audio
+    const events = ["click", "touchstart", "keydown", "mousemove", "scroll"]
+    
+    const handleInteraction = () => {
+      initAudio()
+      // Remove listeners after first successful interaction
+      if (glitchEngineRef.current?.initialized) {
+        events.forEach(event => document.removeEventListener(event, handleInteraction))
+      }
+    }
+    
+    events.forEach(event => document.addEventListener(event, handleInteraction, { once: false, passive: true }))
     
     return () => {
-      document.removeEventListener("click", handleInteraction)
-      document.removeEventListener("keydown", handleInteraction)
-      document.removeEventListener("touchstart", handleInteraction)
+      events.forEach(event => document.removeEventListener(event, handleInteraction))
+      if (glitchIntervalRef.current) clearInterval(glitchIntervalRef.current)
     }
   }, [initAudio])
 
@@ -241,6 +258,9 @@ export function BootScreen({ onComplete }: BootScreenProps) {
     return () => {
       if (glitchEngineRef.current) {
         glitchEngineRef.current.destroy()
+      }
+      if (glitchIntervalRef.current) {
+        clearInterval(glitchIntervalRef.current)
       }
     }
   }, [])
@@ -268,7 +288,6 @@ export function BootScreen({ onComplete }: BootScreenProps) {
       }
     }, 300)
     
-    // Remove old particles
     const cleanup = setInterval(() => {
       setParticles(prev => prev.slice(-12))
     }, 2000)
@@ -310,7 +329,7 @@ export function BootScreen({ onComplete }: BootScreenProps) {
       })
 
       if (!response.ok) {
-        setVoiceState("error")
+        setVoiceState("done")
         setTimeout(completeBootSequence, 1500)
         return
       }
@@ -329,21 +348,22 @@ export function BootScreen({ onComplete }: BootScreenProps) {
         setTimeout(completeBootSequence, 500)
       }
       audio.onerror = () => {
-        setVoiceState("error")
+        setVoiceState("done")
         setTimeout(completeBootSequence, 1500)
       }
 
+      // Try to play - if blocked, it will still work because user has interacted
       await audio.play()
     } catch {
-      setVoiceState("idle")
-      voiceTriggeredRef.current = false
-      setShowAudioPrompt(true)
+      setVoiceState("done")
+      setTimeout(completeBootSequence, 1500)
     }
   }, [completeBootSequence])
 
+  // Trigger voice when boot completes
   useEffect(() => {
     if (bootComplete && voiceState === "idle" && !voiceTriggeredRef.current) {
-      if (glitchEngineRef.current) {
+      if (glitchEngineRef.current?.initialized) {
         glitchEngineRef.current.playBootComplete()
       }
       triggerVoice()
@@ -359,7 +379,7 @@ export function BootScreen({ onComplete }: BootScreenProps) {
     if (currentCharIndex < currentLine.text.length) {
       const timer = setTimeout(() => {
         setCurrentCharIndex(prev => prev + 1)
-        if (glitchEngineRef.current && audioInitialized) {
+        if (glitchEngineRef.current?.initialized) {
           glitchEngineRef.current.playTypeSound()
         }
       }, TYPING_SPEED)
@@ -367,7 +387,7 @@ export function BootScreen({ onComplete }: BootScreenProps) {
     } else {
       setDisplayedLines(prev => {
         if (prev.length <= currentLineIndex) {
-          if (glitchEngineRef.current && audioInitialized) {
+          if (glitchEngineRef.current?.initialized) {
             glitchEngineRef.current.playLineComplete()
           }
           return [...prev, currentLine.text]
@@ -385,28 +405,16 @@ export function BootScreen({ onComplete }: BootScreenProps) {
         setBootComplete(true)
       }
     }
-  }, [currentLineIndex, currentCharIndex, isBooting, isTransitioning, bootComplete, audioInitialized])
+  }, [currentLineIndex, currentCharIndex, isBooting, isTransitioning, bootComplete])
 
   const handleSkip = useCallback(() => {
     if (audioRef.current) audioRef.current.pause()
     completeBootSequence()
   }, [completeBootSequence])
 
-  const handleEnableAudio = useCallback(() => {
-    setShowAudioPrompt(false)
-    triggerVoice()
-  }, [triggerVoice])
-
-  const handleSkipAudio = useCallback(() => {
-    setShowAudioPrompt(false)
-    setVoiceState("done")
-    setTimeout(completeBootSequence, 500)
-  }, [completeBootSequence])
-
   const currentLine = BOOT_MESSAGES[currentLineIndex]
   const typingText = currentLine?.text.slice(0, currentCharIndex) || ""
   const progress = ((currentLineIndex + (currentCharIndex / (currentLine?.text.length || 1))) / BOOT_MESSAGES.length) * 100
-  const IconComponent = currentLine?.icon || Terminal
 
   const getColorClass = (color: string) => {
     const colors: Record<string, string> = {
@@ -426,8 +434,7 @@ export function BootScreen({ onComplete }: BootScreenProps) {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 1.02, filter: "blur(10px)" }}
           transition={{ duration: 0.6, ease: "easeInOut" }}
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden cursor-pointer"
-          onClick={initAudio}
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
         >
           {/* Gradient background */}
           <div className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a1a] to-[#1a0a2e]" />
@@ -498,14 +505,26 @@ export function BootScreen({ onComplete }: BootScreenProps) {
             animate={{ opacity: 0.6 }}
             whileHover={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            onClick={(e) => { e.stopPropagation(); handleSkip(); }}
+            onClick={handleSkip}
             className="absolute top-6 right-6 px-4 py-2 text-xs font-mono text-white/60 hover:text-white border border-white/20 hover:border-cyan-400/50 rounded-md backdrop-blur-sm transition-colors z-10"
           >
             Skip Intro
           </motion.button>
 
-          {/* System stats - top left */}
-          <div className="absolute top-6 left-6 space-y-2 font-mono text-xs">
+          {/* Audio indicator */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: audioInitialized ? 1 : 0.3 }}
+            className="absolute top-6 left-6 flex items-center gap-2 text-xs font-mono"
+          >
+            <Volume2 className={`h-4 w-4 ${audioInitialized ? "text-cyan-400" : "text-white/30"}`} />
+            <span className={audioInitialized ? "text-cyan-400" : "text-white/30"}>
+              {audioInitialized ? "Audio Active" : "Move mouse for audio"}
+            </span>
+          </motion.div>
+
+          {/* System stats - below audio indicator */}
+          <div className="absolute top-16 left-6 space-y-2 font-mono text-xs">
             <div className="flex items-center gap-2">
               <Cpu className="h-3 w-3 text-cyan-400" />
               <span className="text-white/40">CPU</span>
@@ -569,208 +588,171 @@ export function BootScreen({ onComplete }: BootScreenProps) {
                 animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.7, 0.4] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               />
-              
               {/* Orbiting ring */}
               <motion.div
-                className="absolute -inset-6 border border-cyan-400/20 rounded-full"
+                className="absolute inset-0 rounded-2xl border border-cyan-400/30"
                 animate={{ rotate: 360 }}
                 transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                style={{ transformOrigin: "center" }}
               >
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-cyan-400 rounded-full" />
+                <div className="absolute -top-1 left-1/2 w-2 h-2 bg-cyan-400 rounded-full -translate-x-1/2" />
               </motion.div>
             </motion.div>
 
             {/* Title */}
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
               className="text-center"
             >
               <h1 
-                className="text-2xl font-bold text-white tracking-wider"
-                style={{ textShadow: "0 0 30px rgba(6, 182, 212, 0.5)" }}
+                className="text-3xl font-bold text-white mb-2" 
+                style={{ textShadow: "0 0 30px rgba(168, 85, 247, 0.5)" }}
               >
-                NOTION OS
+                Notion OS
               </h1>
-              <p className="text-white/30 text-xs font-mono mt-1">v2.0.0 // Neural Interface</p>
+              <p className="text-white/50 text-sm font-mono">v2.0.25 | Neural Engine Active</p>
             </motion.div>
 
-            {/* Boot messages terminal */}
-            <div className="w-full bg-black/40 backdrop-blur-sm rounded-lg border border-white/10 p-4 font-mono text-sm">
-              {/* Terminal header */}
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-white/10">
-                <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                <span className="text-white/30 text-xs ml-2">system.boot</span>
+            {/* Boot terminal */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="w-full max-w-lg"
+            >
+              <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-lg overflow-hidden">
+                {/* Terminal header */}
+                <div className="flex items-center gap-2 px-4 py-2 border-b border-white/10 bg-white/5">
+                  <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                  <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                  <span className="ml-2 text-xs text-white/40 font-mono">notion-os-terminal</span>
+                </div>
+                
+                {/* Terminal content */}
+                <div className="p-4 font-mono text-sm min-h-[200px]">
+                  {/* Completed lines */}
+                  {displayedLines.map((line, index) => {
+                    const msgData = BOOT_MESSAGES[index]
+                    const IconComp = msgData.icon
+                    return (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-center gap-2 mb-2"
+                      >
+                        <IconComp className={`h-4 w-4 ${getColorClass(msgData.color)}`} />
+                        <span className="text-green-400">[OK]</span>
+                        <span className="text-white/80">{line}</span>
+                      </motion.div>
+                    )
+                  })}
+                  
+                  {/* Currently typing line */}
+                  {!bootComplete && currentLineIndex < BOOT_MESSAGES.length && (
+                    <motion.div 
+                      className="flex items-center gap-2"
+                      animate={{ x: glitchActive ? [0, -2, 2, 0] : 0 }}
+                    >
+                      {(() => {
+                        const IconComp = currentLine.icon
+                        return <IconComp className={`h-4 w-4 ${getColorClass(currentLine.color)}`} />
+                      })()}
+                      <span className="text-yellow-400">[...]</span>
+                      <span className="text-white/80">
+                        {typingText}
+                        <span className={`${showCursor ? "opacity-100" : "opacity-0"} text-cyan-400`}>|</span>
+                      </span>
+                    </motion.div>
+                  )}
+                  
+                  {/* Boot complete message */}
+                  {bootComplete && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="mt-4 pt-4 border-t border-white/10"
+                    >
+                      <div className="flex items-center gap-2 text-cyan-400">
+                        <Zap className="h-4 w-4" />
+                        <span>System ready</span>
+                        {voiceState === "loading" && (
+                          <motion.span
+                            animate={{ opacity: [1, 0.3, 1] }}
+                            transition={{ duration: 1, repeat: Infinity }}
+                            className="text-white/50"
+                          >
+                            | Initializing voice...
+                          </motion.span>
+                        )}
+                        {voiceState === "playing" && (
+                          <span className="flex items-center gap-1 text-green-400">
+                            | Speaking
+                            <motion.span
+                              className="flex gap-0.5"
+                            >
+                              {[0, 1, 2].map(i => (
+                                <motion.span
+                                  key={i}
+                                  className="w-1 bg-green-400 rounded-full"
+                                  animate={{ height: [4, 12, 4] }}
+                                  transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.15 }}
+                                />
+                              ))}
+                            </motion.span>
+                          </span>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
               </div>
-              
-              {/* Completed lines */}
-              {displayedLines.map((line, index) => {
-                const msgData = BOOT_MESSAGES[index]
-                const Icon = msgData?.icon || Terminal
-                return (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 0.6, x: 0 }}
-                    className="flex items-center gap-2 mb-1"
-                  >
-                    <Icon className={`h-3 w-3 ${getColorClass(msgData?.color || "cyan")}`} />
-                    <span className="text-green-400">[OK]</span>
-                    <span className="text-white/60">{line}</span>
-                  </motion.div>
-                )
-              })}
-
-              {/* Currently typing line */}
-              {currentLineIndex < BOOT_MESSAGES.length && displayedLines.length <= currentLineIndex && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center gap-2"
-                >
-                  <IconComponent className={`h-3 w-3 ${getColorClass(currentLine?.color || "cyan")}`} />
-                  <motion.span
-                    className="text-yellow-400"
-                    animate={{ opacity: [1, 0.5, 1] }}
-                    transition={{ duration: 0.5, repeat: Infinity }}
-                  >
-                    [...]
-                  </motion.span>
-                  <span className="text-white">{typingText}</span>
-                  <motion.span
-                    animate={{ opacity: showCursor ? 1 : 0 }}
-                    className="inline-block w-2 h-4 bg-cyan-400"
-                    style={{ boxShadow: "0 0 8px rgba(6, 182, 212, 0.8)" }}
-                  />
-                </motion.div>
-              )}
-            </div>
+            </motion.div>
 
             {/* Progress bar */}
-            <div className="w-full space-y-2">
-              <div className="flex justify-between text-xs font-mono text-white/40">
-                <span>System Boot Progress</span>
-                <span>{Math.round(bootComplete ? 100 : progress)}%</span>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="w-full max-w-lg"
+            >
+              <div className="flex items-center justify-between text-xs font-mono text-white/40 mb-2">
+                <span>Loading system</span>
+                <span>{Math.round(progress)}%</span>
               </div>
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
                 <motion.div
                   className="h-full rounded-full relative"
-                  style={{ background: "linear-gradient(90deg, #06b6d4, #a855f7, #ec4899)" }}
-                  initial={{ width: "0%" }}
-                  animate={{ width: bootComplete ? "100%" : `${progress}%` }}
-                  transition={{ duration: 0.1 }}
+                  style={{
+                    background: "linear-gradient(90deg, #06b6d4, #a855f7, #ec4899)",
+                  }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.3 }}
                 >
+                  {/* Shimmer effect */}
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
                     animate={{ x: ["-100%", "100%"] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
                   />
                 </motion.div>
               </div>
-            </div>
-
-            {/* Audio prompt */}
-            <AnimatePresence>
-              {showAudioPrompt && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex flex-col items-center gap-4"
-                >
-                  <motion.button
-                    onClick={(e) => { e.stopPropagation(); handleEnableAudio(); }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="flex items-center gap-3 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white font-medium shadow-lg shadow-purple-500/30"
-                  >
-                    <Volume2 className="h-5 w-5" />
-                    <span>Enable Voice</span>
-                  </motion.button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleSkipAudio(); }}
-                    className="flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors"
-                  >
-                    <VolumeX className="h-4 w-4" />
-                    <span>Continue without audio</span>
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Voice states */}
-            <AnimatePresence>
-              {voiceState === "loading" && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-3"
-                >
-                  <div className="flex items-center gap-1">
-                    {[...Array(4)].map((_, i) => (
-                      <motion.div
-                        key={i}
-                        className="w-1 bg-cyan-400/50 rounded-full"
-                        animate={{ height: ["4px", "16px", "4px"] }}
-                        transition={{ duration: 0.4, repeat: Infinity, delay: i * 0.1 }}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm text-cyan-400/80 font-mono">Initializing voice interface...</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <AnimatePresence>
-              {voiceState === "playing" && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-3 bg-cyan-500/10 px-4 py-2 rounded-full border border-cyan-500/30"
-                >
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <motion.div
-                        key={i}
-                        className="w-1.5 bg-gradient-to-t from-cyan-400 to-purple-400 rounded-full"
-                        animate={{ height: ["8px", "24px", "8px"] }}
-                        transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.08 }}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm text-cyan-400 font-mono">Voice active</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Click hint */}
-            {!audioInitialized && !bootComplete && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.4 }}
-                transition={{ delay: 2 }}
-                className="text-xs text-white/30 font-mono"
-              >
-                Click anywhere to enable sound
-              </motion.p>
-            )}
+            </motion.div>
           </div>
 
           {/* Corner decorations */}
-          <div className="absolute top-0 left-0 w-32 h-32 border-l-2 border-t-2 border-cyan-400/20" />
-          <div className="absolute top-0 right-0 w-32 h-32 border-r-2 border-t-2 border-purple-400/20" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 border-l-2 border-b-2 border-pink-400/20" />
-          <div className="absolute bottom-0 right-0 w-32 h-32 border-r-2 border-b-2 border-cyan-400/20" />
+          <div className="absolute top-0 left-0 w-32 h-32 border-l-2 border-t-2 border-cyan-500/20" />
+          <div className="absolute top-0 right-0 w-32 h-32 border-r-2 border-t-2 border-purple-500/20" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 border-l-2 border-b-2 border-pink-500/20" />
+          <div className="absolute bottom-0 right-0 w-32 h-32 border-r-2 border-b-2 border-cyan-500/20" />
 
           {/* Version info */}
           <div className="absolute bottom-6 left-6 font-mono text-xs text-white/20">
-            <div>Build: 2024.05.NOTION-OS</div>
-            <div>Kernel: Neural-v2.0.0</div>
+            <p>BUILD 2025.05.05</p>
+            <p>KERNEL: notion-neural-v2</p>
           </div>
         </motion.div>
       )}
