@@ -41,28 +41,42 @@ export function HeroSection({ onVoiceTour }: HeroSectionProps) {
   const [isVoicePlaying, setIsVoicePlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  // Handle demo interaction
+  // Handle demo interaction with OpenRouter AI
   const handleDemoSubmit = async () => {
-    if (isProcessing) return
+    if (isProcessing || !demoInput.trim()) return
     
     setIsProcessing(true)
     setAiResponse("")
     
-    // Simulate typing response
-    const response = "Based on your meeting notes, here are the key takeaways: 3 action items assigned, Q2 roadmap approved, and next sync scheduled for Friday."
-    
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
-    // Typewriter effect for response
-    for (let i = 0; i <= response.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 20))
-      setAiResponse(response.slice(0, i))
+    try {
+      // Call OpenRouter API for real AI response
+      const chatResponse = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: demoInput }),
+      })
+      
+      let response = "I'm here to help you with Notion OS. Ask me anything about productivity, planning, or project management."
+      
+      if (chatResponse.ok) {
+        const data = await chatResponse.json()
+        response = data.response || response
+      }
+      
+      // Typewriter effect for response
+      for (let i = 0; i <= response.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, 15))
+        setAiResponse(response.slice(0, i))
+      }
+      
+      setIsProcessing(false)
+      
+      // Trigger ElevenLabs voice playback
+      triggerVoice(response)
+    } catch (error) {
+      setAiResponse("I'm ready to help you explore Notion OS. Try asking about AI agents, knowledge management, or team collaboration.")
+      setIsProcessing(false)
     }
-    
-    setIsProcessing(false)
-    
-    // Trigger voice playback
-    triggerVoice(response)
   }
 
   // Trigger ElevenLabs voice
