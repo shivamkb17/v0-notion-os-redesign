@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Volume2 } from "lucide-react"
-import { useElevenLabsVoice } from "@/hooks/use-elevenlabs-voice"
 
 const BOOT_MESSAGES = [
   "Initializing Notion OS...",
@@ -16,7 +15,6 @@ const VOICE_INTRO = "Welcome to Notion. Your intelligent workspace. Let me show 
 
 const TYPING_SPEED = 40 // ms per character
 const LINE_DELAY = 400 // ms between lines
-const TOTAL_MAX_TIME = 3500 // 3.5 seconds max
 
 interface BootScreenProps {
   onComplete: () => void
@@ -29,13 +27,12 @@ export function BootScreen({ onComplete }: BootScreenProps) {
   const [displayedLines, setDisplayedLines] = useState<string[]>([])
   const [showCursor, setShowCursor] = useState(true)
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const [voiceTriggered, setVoiceTriggered] = useState(false)
-  const [audioEnabled, setAudioEnabled] = useState(false)
-  const [showAudioPrompt, setShowAudioPrompt] = useState(false)
+  const [bootComplete, setBootComplete] = useState(false)
+  const [voiceState, setVoiceState] = useState<"idle" | "loading" | "playing" | "done" | "error">("idle")
+  const [userInteracted, setUserInteracted] = useState(false)
   
-  const { speak, isPlaying, isLoading } = useElevenLabsVoice()
-  const startTimeRef = useRef<number>(Date.now())
   const hasCompletedRef = useRef(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   // Blinking cursor effect
   useEffect(() => {
@@ -45,11 +42,12 @@ export function BootScreen({ onComplete }: BootScreenProps) {
     return () => clearInterval(interval)
   }, [])
 
-  // Complete the boot sequence
+  // Complete the boot sequence and transition to landing page
   const completeBootSequence = useCallback(() => {
     if (hasCompletedRef.current) return
     hasCompletedRef.current = true
     
+    console.log("[v0] Completing boot sequence, transitioning...")
     setIsTransitioning(true)
     setTimeout(() => {
       setIsBooting(false)
@@ -57,21 +55,72 @@ export function BootScreen({ onComplete }: BootScreenProps) {
     }, 400)
   }, [onComplete])
 
-  // Trigger voice and enable audio on any user interaction
-  const enableAudioAndSpeak = useCallback(() => {
-    if (audioEnabled) return
-    setAudioEnabled(true)
-    setShowAudioPrompt(false)
-    speak(VOICE_INTRO)
-  }, [audioEnabled, speak])
+  // Trigger ElevenLabs voice
+  const triggerVoice = useCallback(async () => {
+    if (voiceState !== "idle") return
+    
+    console.log("[v0] Triggering ElevenLabs voice...")
+    setVoiceState("loading")
+    
+    try {
+      const response = await fetch("/api/voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: VOICE_INTRO }),
+      })
 
-  // Listen for any click/touch to enable audio
+      if (!response.ok) {
+        console.error("[v0] Voice API failed:", response.status)
+        setVoiceState("error")
+        // Continue to landing page even if voice fails
+        setTimeout(completeBootSequence, 1000)
+        return
+      }
+
+      const audioBlob = await response.blob()
+      const audioUrl = URL.createObjectURL(audioBlob)
+      
+      const audio = new Audio(audioUrl)
+      audio.volume = 0.7
+      audioRef.current = audio
+
+      audio.onplay = () => {
+        console.log("[v0] Voice playing")
+        setVoiceState("playing")
+      }
+      
+      audio.onended = () => {
+        console.log("[v0] Voice ended, completing boot")
+        setVoiceState("done")
+        URL.revokeObjectURL(audioUrl)
+        completeBootSequence()
+      }
+      
+      audio.onerror = (e) => {
+        console.error("[v0] Audio playback error:", e)
+        setVoiceState("error")
+        completeBootSequence()
+      }
+
+      // Try to play
+      await audio.play()
+      console.log("[v0] Audio play() succeeded")
+      
+    } catch (err) {
+      console.error("[v0] Voice error:", err)
+      setVoiceState("error")
+      // Continue to landing page even if voice fails
+      setTimeout(completeBootSequence, 1000)
+    }
+  }, [voiceState, completeBootSequence])
+
+  // Track user interaction for audio autoplay
   useEffect(() => {
     const handleInteraction = () => {
-      enableAudioAndSpeak()
+      console.log("[v0] User interacted")
+      setUserInteracted(true)
     }
 
-    // Add listeners for user interaction
     window.addEventListener("click", handleInteraction, { once: true })
     window.addEventListener("touchstart", handleInteraction, { once: true })
     window.addEventListener("keydown", handleInteraction, { once: true })
@@ -81,11 +130,26 @@ export function BootScreen({ onComplete }: BootScreenProps) {
       window.removeEventListener("touchstart", handleInteraction)
       window.removeEventListener("keydown", handleInteraction)
     }
-  }, [enableAudioAndSpeak])
+  }, [])
+
+  // When boot messages complete AND user has interacted, trigger voice
+  useEffect(() => {
+    if (bootComplete && userInteracted && voiceState === "idle") {
+      console.log("[v0] Boot complete + user interacted, triggering voice")
+      triggerVoice()
+    }
+  }, [bootComplete, userInteracted, voiceState, triggerVoice])
+
+  // If user interacts while boot is complete but voice hasn't started
+  useEffect(() => {
+    if (bootComplete && voiceState === "idle" && userInteracted) {
+      triggerVoice()
+    }
+  }, [userInteracted, bootComplete, voiceState, triggerVoice])
 
   // Typewriter effect
   useEffect(() => {
-    if (!isBooting || isTransitioning) return
+    if (!isBooting || isTransitioning || bootComplete) return
 
     const currentLine = BOOT_MESSAGES[currentLineIndex]
     
@@ -110,37 +174,29 @@ export function BootScreen({ onComplete }: BootScreenProps) {
           setCurrentCharIndex(0)
         }, LINE_DELAY)
         return () => clearTimeout(timer)
-      } else if (!voiceTriggered) {
-        // All lines complete - show audio prompt if not yet enabled
-        setVoiceTriggered(true)
-        
-        if (!audioEnabled) {
-          setShowAudioPrompt(true)
-        }
-        
-        // Complete after delay
-        const timer = setTimeout(() => {
-          completeBootSequence()
-        }, 2500)
-        return () => clearTimeout(timer)
+      } else {
+        // All boot messages complete
+        console.log("[v0] All boot messages displayed")
+        setBootComplete(true)
       }
     }
-  }, [currentLineIndex, currentCharIndex, isBooting, isTransitioning, voiceTriggered, audioEnabled, completeBootSequence])
-
-  // Safety timeout
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!hasCompletedRef.current) {
-        completeBootSequence()
-      }
-    }, TOTAL_MAX_TIME)
-    return () => clearTimeout(timer)
-  }, [completeBootSequence])
+  }, [currentLineIndex, currentCharIndex, isBooting, isTransitioning, bootComplete])
 
   // Skip intro handler
   const handleSkip = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+    }
     completeBootSequence()
   }, [completeBootSequence])
+
+  // Handle click to enable audio
+  const handleScreenClick = useCallback(() => {
+    setUserInteracted(true)
+    if (bootComplete && voiceState === "idle") {
+      triggerVoice()
+    }
+  }, [bootComplete, voiceState, triggerVoice])
 
   const currentLine = BOOT_MESSAGES[currentLineIndex]
   const typingText = currentLine?.slice(0, currentCharIndex) || ""
@@ -153,7 +209,7 @@ export function BootScreen({ onComplete }: BootScreenProps) {
           exit={{ opacity: 0, scale: 1.02, filter: "blur(10px)" }}
           transition={{ duration: 0.6, ease: "easeInOut" }}
           className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden cursor-pointer"
-          onClick={enableAudioAndSpeak}
+          onClick={handleScreenClick}
         >
           {/* Gradient background */}
           <div className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a1a] to-[#1a0a2e]" />
@@ -182,16 +238,6 @@ export function BootScreen({ onComplete }: BootScreenProps) {
               backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)",
               backgroundSize: "100% 4px",
             }}
-          />
-
-          {/* Noise texture */}
-          <motion.div
-            className="absolute inset-0 pointer-events-none opacity-[0.015]"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-            }}
-            animate={{ opacity: [0.015, 0.025, 0.015] }}
-            transition={{ duration: 0.1, repeat: Infinity }}
           />
 
           {/* Skip button */}
@@ -277,9 +323,9 @@ export function BootScreen({ onComplete }: BootScreenProps) {
               )}
             </div>
 
-            {/* Audio prompt - appears when boot is done but audio not enabled */}
+            {/* Audio prompt - appears when boot is done but waiting for interaction */}
             <AnimatePresence>
-              {showAudioPrompt && !audioEnabled && (
+              {bootComplete && !userInteracted && voiceState === "idle" && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -292,15 +338,15 @@ export function BootScreen({ onComplete }: BootScreenProps) {
                     className="flex items-center gap-2 px-5 py-3 rounded-full bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-pink-500/20 border border-white/10 backdrop-blur-sm"
                   >
                     <Volume2 className="h-4 w-4 text-cyan-400" />
-                    <span className="text-sm text-white/80 font-mono">Click anywhere for voice</span>
+                    <span className="text-sm text-white/80 font-mono">Click anywhere to continue</span>
                   </motion.div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Audio active indicator */}
+            {/* Voice loading indicator */}
             <AnimatePresence>
-              {(isPlaying || isLoading) && (
+              {voiceState === "loading" && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -311,21 +357,49 @@ export function BootScreen({ onComplete }: BootScreenProps) {
                     {[...Array(4)].map((_, i) => (
                       <motion.div
                         key={i}
-                        className="w-1 bg-cyan-400 rounded-full"
+                        className="w-1 bg-cyan-400/50 rounded-full"
                         animate={{
-                          height: ["8px", "20px", "8px"],
+                          height: ["4px", "12px", "4px"],
                         }}
                         transition={{
-                          duration: 0.6,
+                          duration: 0.4,
                           repeat: Infinity,
                           delay: i * 0.1,
                         }}
                       />
                     ))}
                   </div>
-                  <span className="text-sm text-cyan-400/80 font-mono">
-                    {isLoading ? "Preparing voice..." : "Voice active"}
-                  </span>
+                  <span className="text-sm text-cyan-400/80 font-mono">Preparing voice...</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Audio active indicator */}
+            <AnimatePresence>
+              {voiceState === "playing" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center gap-3"
+                >
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="w-1 bg-cyan-400 rounded-full"
+                        animate={{
+                          height: ["8px", "24px", "8px"],
+                        }}
+                        transition={{
+                          duration: 0.5,
+                          repeat: Infinity,
+                          delay: i * 0.08,
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm text-cyan-400 font-mono">Voice active</span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -340,7 +414,9 @@ export function BootScreen({ onComplete }: BootScreenProps) {
                   }}
                   initial={{ width: "0%" }}
                   animate={{ 
-                    width: `${Math.min(((currentLineIndex + (currentCharIndex / (BOOT_MESSAGES[currentLineIndex]?.length || 1))) / BOOT_MESSAGES.length) * 100, 100)}%` 
+                    width: bootComplete 
+                      ? "100%" 
+                      : `${Math.min(((currentLineIndex + (currentCharIndex / (BOOT_MESSAGES[currentLineIndex]?.length || 1))) / BOOT_MESSAGES.length) * 100, 100)}%` 
                   }}
                   transition={{ duration: 0.1 }}
                 />
