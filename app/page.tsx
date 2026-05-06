@@ -6,6 +6,7 @@ import { BootScreen } from "@/components/notion-os/boot-screen"
 import { Navbar } from "@/components/notion-os/navbar"
 import { HeroSection } from "@/components/notion-os/hero-section"
 import { AgentCommandCenter } from "@/components/notion-os/agent-command-center"
+import { AIAssistantsSection } from "@/components/notion-os/ai-assistants-section"
 import { AISection } from "@/components/notion-os/ai-section"
 import { FeaturesSection } from "@/components/notion-os/features-section"
 import { SecondBrainSection } from "@/components/notion-os/second-brain-section"
@@ -36,6 +37,7 @@ export default function HomePage() {
             <main>
               <HeroSection />
               <AgentCommandCenter />
+              <AIAssistantsSection />
               <AISection />
               <FeaturesSection />
               <SecondBrainSection />
