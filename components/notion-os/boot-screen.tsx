@@ -28,6 +28,7 @@ class GlitchSoundEngine {
   private audioContext: AudioContext | null = null
   private gainNode: GainNode | null = null
   public initialized = false
+  private compressor: DynamicsCompressor | null = null
 
   async init(): Promise<boolean> {
     if (this.initialized) return true
@@ -41,11 +42,17 @@ class GlitchSoundEngine {
         await this.audioContext.resume()
       }
       
+      // Add compressor to prevent clipping at high volumes
+      this.compressor = this.audioContext.createDynamicsCompressor()
+      this.compressor.threshold.value = -24
+      this.compressor.knee.value = 30
+      this.compressor.ratio.value = 12
+      this.compressor.connect(this.audioContext.destination)
+      
       this.gainNode = this.audioContext.createGain()
-      this.gainNode.connect(this.audioContext.destination)
-      this.gainNode.gain.value = 0.3 // Increased from 0.15 to make audio more audible
+      this.gainNode.connect(this.compressor)
+      this.gainNode.gain.value = 0.8 // Much louder - increased from 0.3
       this.initialized = true
-      console.log("[v0] GlitchSoundEngine initialized successfully")
       return true
     } catch (error) {
       console.error("[v0] GlitchSoundEngine init failed:", error)
@@ -71,7 +78,7 @@ class GlitchSoundEngine {
     osc.frequency.exponentialRampToValueAtTime(50 + Math.random() * 200, now + duration)
     
     oscGain.gain.setValueAtTime(0, now)
-    oscGain.gain.linearRampToValueAtTime(0.5, now + 0.01) // Increased from 0.3
+    oscGain.gain.linearRampToValueAtTime(0.9, now + 0.01) // Massively increased from 0.5
     oscGain.gain.exponentialRampToValueAtTime(0.001, now + duration)
     
     osc.start(now)
@@ -91,7 +98,7 @@ class GlitchSoundEngine {
     osc1.frequency.value = 80
     osc1.type = "sine"
     gain1.gain.setValueAtTime(0, now)
-    gain1.gain.linearRampToValueAtTime(0.2, now + 0.1)
+    gain1.gain.linearRampToValueAtTime(0.6, now + 0.1) // Increased from 0.2
     gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5)
     osc1.start(now)
     osc1.stop(now + 0.5)
@@ -104,7 +111,7 @@ class GlitchSoundEngine {
     osc2.frequency.value = 1200
     osc2.type = "sine"
     gain2.gain.setValueAtTime(0, now + 0.05)
-    gain2.gain.linearRampToValueAtTime(0.15, now + 0.08)
+    gain2.gain.linearRampToValueAtTime(0.45, now + 0.08) // Increased from 0.15
     gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.3)
     osc2.start(now + 0.05)
     osc2.stop(now + 0.3)
@@ -123,7 +130,7 @@ class GlitchSoundEngine {
     
     const now = this.audioContext.currentTime
     gain.gain.setValueAtTime(0, now)
-    gain.gain.linearRampToValueAtTime(0.05, now + 0.005)
+    gain.gain.linearRampToValueAtTime(0.25, now + 0.005) // Increased from 0.05
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03)
     
     osc.start(now)
@@ -145,7 +152,7 @@ class GlitchSoundEngine {
       
       const startTime = now + i * 0.05
       gain.gain.setValueAtTime(0, startTime)
-      gain.gain.linearRampToValueAtTime(0.1, startTime + 0.02)
+      gain.gain.linearRampToValueAtTime(0.35, startTime + 0.02) // Increased from 0.1
       gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.15)
       
       osc.start(startTime)
@@ -168,7 +175,7 @@ class GlitchSoundEngine {
       
       const startTime = now + i * 0.08
       gain.gain.setValueAtTime(0, startTime)
-      gain.gain.linearRampToValueAtTime(0.12, startTime + 0.02)
+      gain.gain.linearRampToValueAtTime(0.4, startTime + 0.02) // Increased from 0.12
       gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.25)
       
       osc.start(startTime)
@@ -195,6 +202,7 @@ export function BootScreen({ onComplete }: BootScreenProps) {
   const [voiceState, setVoiceState] = useState<"idle" | "loading" | "playing" | "done">("idle")
   const [audioInitialized, setAudioInitialized] = useState(false)
   const [glitchActive, setGlitchActive] = useState(false)
+  const [isAudioOn, setIsAudioOn] = useState(false) // Visual indicator for audio presence
   const [systemStats, setSystemStats] = useState({ cpu: 0, memory: 0, network: 0 })
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number }>>([])
   
@@ -218,10 +226,10 @@ export function BootScreen({ onComplete }: BootScreenProps) {
     const success = await glitchEngineRef.current.init()
     if (success) {
       setAudioInitialized(true)
+      setIsAudioOn(true) // Visual indicator: audio engine is ready
       
       // Play initial boot sound
       glitchEngineRef.current.playBootSound()
-      console.log("[v0] Boot sound played")
       
       // Start glitch sequence
       glitchIntervalRef.current = setInterval(() => {
@@ -245,11 +253,9 @@ export function BootScreen({ onComplete }: BootScreenProps) {
     const events = ["click", "touchstart", "keydown", "mousemove", "scroll"]
     
     const handleInteraction = () => {
-      console.log("[v0] User interaction detected, attempting audio init")
       initAudio()
       // Remove listeners after first successful interaction
       if (glitchEngineRef.current?.initialized) {
-        console.log("[v0] Audio initialized, removing interaction listeners")
         events.forEach(event => document.removeEventListener(event, handleInteraction))
       }
     }
@@ -329,7 +335,6 @@ export function BootScreen({ onComplete }: BootScreenProps) {
     voiceTriggeredRef.current = true
     
     setVoiceState("loading")
-    console.log("[v0] Starting voice generation for:", VOICE_INTRO)
     
     try {
       const response = await fetch("/api/voice", {
@@ -339,34 +344,28 @@ export function BootScreen({ onComplete }: BootScreenProps) {
       })
 
       if (!response.ok) {
-        console.error("[v0] Voice API error:", response.status, response.statusText)
         setVoiceState("done")
         setTimeout(completeBootSequence, 1500)
         return
       }
 
       const audioBlob = await response.blob()
-      console.log("[v0] Received audio blob:", audioBlob.size, "bytes")
-      
       const audioUrl = URL.createObjectURL(audioBlob)
       const audio = new Audio(audioUrl)
       audio.volume = 0.9 // Increased from 0.8
       audioRef.current = audio
 
       audio.onplay = () => {
-        console.log("[v0] Audio started playing")
         setVoiceState("playing")
       }
       
       audio.onended = () => {
-        console.log("[v0] Audio finished playing")
         setVoiceState("done")
         URL.revokeObjectURL(audioUrl)
         setTimeout(completeBootSequence, 500)
       }
       
       audio.onerror = (event) => {
-        console.error("[v0] Audio playback error:", event)
         setVoiceState("done")
         URL.revokeObjectURL(audioUrl)
         setTimeout(completeBootSequence, 1500)
@@ -377,11 +376,8 @@ export function BootScreen({ onComplete }: BootScreenProps) {
         await glitchEngineRef.current.audioContext.resume()
       }
 
-      console.log("[v0] Attempting to play audio...")
       await audio.play()
-      console.log("[v0] Audio play command issued successfully")
     } catch (error) {
-      console.error("[v0] Voice trigger error:", error)
       setVoiceState("done")
       setTimeout(completeBootSequence, 1500)
     }
@@ -535,6 +531,26 @@ export function BootScreen({ onComplete }: BootScreenProps) {
             onClick={handleSkip}
             className="absolute top-6 right-6 px-4 py-2 text-xs font-mono text-white/60 hover:text-white border border-white/20 hover:border-cyan-400/50 rounded-md backdrop-blur-sm transition-colors z-10"
           >
+            SKIP
+          </motion.button>
+
+          {/* Audio Status Indicator */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.8 }}
+            transition={{ delay: 0.3 }}
+            className="absolute top-6 left-6 flex items-center gap-2 text-xs font-mono text-cyan-400 z-10"
+          >
+            <Volume2 className="w-4 h-4" />
+            <span>AUDIO</span>
+            {isAudioOn && (
+              <motion.div
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ duration: 1, repeat: Infinity }}
+                className="w-2 h-2 rounded-full bg-cyan-400"
+              />
+            )}
+          </motion.div>
             Skip Intro
           </motion.button>
 
