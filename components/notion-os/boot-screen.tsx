@@ -43,10 +43,12 @@ class GlitchSoundEngine {
       
       this.gainNode = this.audioContext.createGain()
       this.gainNode.connect(this.audioContext.destination)
-      this.gainNode.gain.value = 0.15
+      this.gainNode.gain.value = 0.3 // Increased from 0.15 to make audio more audible
       this.initialized = true
+      console.log("[v0] GlitchSoundEngine initialized successfully")
       return true
-    } catch {
+    } catch (error) {
+      console.error("[v0] GlitchSoundEngine init failed:", error)
       return false
     }
   }
@@ -69,7 +71,7 @@ class GlitchSoundEngine {
     osc.frequency.exponentialRampToValueAtTime(50 + Math.random() * 200, now + duration)
     
     oscGain.gain.setValueAtTime(0, now)
-    oscGain.gain.linearRampToValueAtTime(0.3, now + 0.01)
+    oscGain.gain.linearRampToValueAtTime(0.5, now + 0.01) // Increased from 0.3
     oscGain.gain.exponentialRampToValueAtTime(0.001, now + duration)
     
     osc.start(now)
@@ -219,6 +221,7 @@ export function BootScreen({ onComplete }: BootScreenProps) {
       
       // Play initial boot sound
       glitchEngineRef.current.playBootSound()
+      console.log("[v0] Boot sound played")
       
       // Start glitch sequence
       glitchIntervalRef.current = setInterval(() => {
@@ -228,6 +231,8 @@ export function BootScreen({ onComplete }: BootScreenProps) {
           setTimeout(() => setGlitchActive(false), 100)
         }
       }, 200)
+    } else {
+      console.warn("[v0] Failed to initialize audio engine")
     }
   }, [audioInitialized])
 
@@ -240,9 +245,11 @@ export function BootScreen({ onComplete }: BootScreenProps) {
     const events = ["click", "touchstart", "keydown", "mousemove", "scroll"]
     
     const handleInteraction = () => {
+      console.log("[v0] User interaction detected, attempting audio init")
       initAudio()
       // Remove listeners after first successful interaction
       if (glitchEngineRef.current?.initialized) {
+        console.log("[v0] Audio initialized, removing interaction listeners")
         events.forEach(event => document.removeEventListener(event, handleInteraction))
       }
     }
@@ -322,6 +329,7 @@ export function BootScreen({ onComplete }: BootScreenProps) {
     voiceTriggeredRef.current = true
     
     setVoiceState("loading")
+    console.log("[v0] Starting voice generation for:", VOICE_INTRO)
     
     try {
       const response = await fetch("/api/voice", {
@@ -331,32 +339,49 @@ export function BootScreen({ onComplete }: BootScreenProps) {
       })
 
       if (!response.ok) {
+        console.error("[v0] Voice API error:", response.status, response.statusText)
         setVoiceState("done")
         setTimeout(completeBootSequence, 1500)
         return
       }
 
       const audioBlob = await response.blob()
-      const audioUrl = URL.createObjectURL(audioBlob)
+      console.log("[v0] Received audio blob:", audioBlob.size, "bytes")
       
+      const audioUrl = URL.createObjectURL(audioBlob)
       const audio = new Audio(audioUrl)
-      audio.volume = 0.8
+      audio.volume = 0.9 // Increased from 0.8
       audioRef.current = audio
 
-      audio.onplay = () => setVoiceState("playing")
+      audio.onplay = () => {
+        console.log("[v0] Audio started playing")
+        setVoiceState("playing")
+      }
+      
       audio.onended = () => {
+        console.log("[v0] Audio finished playing")
         setVoiceState("done")
         URL.revokeObjectURL(audioUrl)
         setTimeout(completeBootSequence, 500)
       }
-      audio.onerror = () => {
+      
+      audio.onerror = (event) => {
+        console.error("[v0] Audio playback error:", event)
         setVoiceState("done")
+        URL.revokeObjectURL(audioUrl)
         setTimeout(completeBootSequence, 1500)
       }
 
-      // Try to play - if blocked, it will still work because user has interacted
+      // Resume audio context before playing
+      if (glitchEngineRef.current?.initialized && glitchEngineRef.current.audioContext?.state === "suspended") {
+        await glitchEngineRef.current.audioContext.resume()
+      }
+
+      console.log("[v0] Attempting to play audio...")
       await audio.play()
-    } catch {
+      console.log("[v0] Audio play command issued successfully")
+    } catch (error) {
+      console.error("[v0] Voice trigger error:", error)
       setVoiceState("done")
       setTimeout(completeBootSequence, 1500)
     }
