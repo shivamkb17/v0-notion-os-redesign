@@ -1,8 +1,8 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { useEffect, useState }
-import { AIOverviewButton } from "./ai-overview-button" from "react"
+import { useEffect, useState } from "react"
+import { AIOverviewButton } from "./ai-overview-button"
 
 const nodes = [
   { id: 1, x: 20, y: 30, label: "Ideas", size: 40 },
