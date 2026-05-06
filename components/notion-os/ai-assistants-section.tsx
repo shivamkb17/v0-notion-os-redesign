@@ -9,12 +9,11 @@ import {
   Play,
   CheckCircle2,
   Sparkles,
-  FileText,
-  Users,
   Calendar,
-  MessageSquare,
   Volume2,
-  Pause
+  Pause,
+  Send,
+  Loader2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -38,6 +37,8 @@ const participants = [
 export function AIAssistantsSection() {
   return (
     <section className="relative py-24 overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0d1339] via-[#0a1628] to-[#0d1339]" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6">
         {/* Section Header */}
@@ -52,63 +53,46 @@ export function AIAssistantsSection() {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="flex items-center justify-center gap-2 mb-4"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-6"
           >
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="w-2 h-2 rounded-full bg-cyan-400"
-            />
-            <span className="text-xs font-mono text-cyan-400 tracking-widest uppercase">
-              AI Assistants Active
-            </span>
+            <Sparkles className="w-4 h-4 text-cyan-400" />
+            <span className="text-sm text-cyan-400 font-medium">Notion AI</span>
           </motion.div>
 
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Ask your on-demand assistants.
+            Ask your <span className="text-cyan-400" style={{ textShadow: "0 0 30px rgba(34, 211, 238, 0.5)" }}>on-demand assistants.</span>
           </h2>
           
-          {/* Animated underline */}
-          <motion.div
-            initial={{ scaleX: 0 }}
-            whileInView={{ scaleX: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="h-0.5 w-48 mx-auto bg-gradient-to-r from-transparent via-cyan-400 to-transparent"
-          />
+          <p className="text-white/60 text-lg max-w-2xl mx-auto">
+            AI that understands your workspace and helps you work smarter, not harder.
+          </p>
         </motion.div>
 
-        {/* Connection Flow Layer */}
-        <ConnectionFlowLayer />
+        {/* Cards Grid - 2 column layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* LEFT: Notion Agent Card with AI Chat */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+          >
+            <NotionAgentCard />
+          </motion.div>
 
-        {/* Cards Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Row 1 */}
-          <div className="lg:col-span-2 grid grid-cols-1 lg:grid-cols-5 gap-6">
-            {/* Notion Agent Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="lg:col-span-2"
-            >
-              <NotionAgentCard />
-            </motion.div>
+          {/* RIGHT: Try it yourself panel */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+          >
+            <TryItYourselfCard />
+          </motion.div>
+        </div>
 
-            {/* Status Update Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="lg:col-span-3"
-            >
-              <StatusUpdateCard />
-            </motion.div>
-          </div>
-
-          {/* Row 2 */}
+        {/* Bottom row - Enterprise Search and Meeting Notes */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -132,416 +116,493 @@ export function AIAssistantsSection() {
   )
 }
 
-// Connection Flow Layer with animated particles
-function ConnectionFlowLayer() {
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {/* Animated connection lines */}
-      <svg className="absolute inset-0 w-full h-full" style={{ opacity: 0.15 }}>
-        <defs>
-          <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#06b6d4" stopOpacity="0" />
-            <stop offset="50%" stopColor="#06b6d4" stopOpacity="1" />
-            <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        
-        {/* Horizontal lines */}
-        <motion.line
-          x1="20%" y1="40%" x2="80%" y2="40%"
-          stroke="url(#lineGradient)"
-          strokeWidth="1"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: [0, 1, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-        />
-        <motion.line
-          x1="30%" y1="60%" x2="70%" y2="60%"
-          stroke="url(#lineGradient)"
-          strokeWidth="1"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: [0, 1, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "linear", delay: 1 }}
-        />
-      </svg>
-
-      {/* Floating particles */}
-      {[...Array(8)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-1 h-1 rounded-full bg-cyan-400"
-          style={{
-            left: `${15 + i * 10}%`,
-            top: `${30 + (i % 3) * 20}%`,
-          }}
-          animate={{
-            x: [0, 50, 0],
-            y: [0, -20, 0],
-            opacity: [0, 1, 0],
-          }}
-          transition={{
-            duration: 3 + i * 0.5,
-            repeat: Infinity,
-            delay: i * 0.3,
-          }}
-        />
-      ))}
-    </div>
-  )
-}
-
-// Notion Agent Card
+// Notion Agent Card with real AI integration
 function NotionAgentCard() {
-  const [isTyping, setIsTyping] = useState(false)
+  const [userInput, setUserInput] = useState("")
+  const [isProcessing, setIsProcessing] = useState(false)
   const [response, setResponse] = useState("")
-  const [showOptions, setShowOptions] = useState(true)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  const options = [
-    { icon: "Aa", text: "Translate this page" },
-    { icon: "Q", text: "Analyze for insights" },
-    { icon: "O", text: "Create a task tracker" },
-  ]
-
-  const handleOptionClick = async (option: string) => {
-    setShowOptions(false)
-    setIsTyping(true)
+  const handleSubmit = async () => {
+    if (!userInput.trim() || isProcessing) return
+    
+    setIsProcessing(true)
     setResponse("")
-
-    const responseText = option === "Translate this page" 
-      ? "I'll translate this page to your preferred language. Detecting content..."
-      : option === "Analyze for insights"
-      ? "Scanning document for key insights and patterns..."
-      : "Creating a new task tracker with your preferences..."
-
-    // Typewriter effect
-    for (let i = 0; i <= responseText.length; i++) {
-      await new Promise(r => setTimeout(r, 25))
-      setResponse(responseText.slice(0, i))
+    
+    try {
+      // Get AI response from OpenRouter
+      const chatResponse = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          message: `User is asking Notion AI assistant: "${userInput}". Provide a helpful, concise response about how Notion can help with this task.`
+        }),
+      })
+      
+      let aiText = "I can help you with that! Let me analyze your request and provide personalized assistance."
+      
+      if (chatResponse.ok) {
+        const data = await chatResponse.json()
+        aiText = data.response || aiText
+      }
+      
+      // Typewriter effect
+      for (let i = 0; i <= aiText.length; i++) {
+        await new Promise(r => setTimeout(r, 20))
+        setResponse(aiText.slice(0, i))
+      }
+      
+      setIsProcessing(false)
+      
+      // Trigger ElevenLabs voice
+      await speakResponse(aiText)
+    } catch {
+      setResponse("I'm ready to help you with any task. Just ask!")
+      setIsProcessing(false)
     }
-    setIsTyping(false)
   }
 
+  const speakResponse = async (text: string) => {
+    try {
+      setIsSpeaking(true)
+      const voiceResponse = await fetch("/api/voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      })
+      
+      if (voiceResponse.ok) {
+        const blob = await voiceResponse.blob()
+        const url = URL.createObjectURL(blob)
+        const audio = new Audio(url)
+        audio.volume = 0.7
+        audioRef.current = audio
+        audio.onended = () => {
+          setIsSpeaking(false)
+          URL.revokeObjectURL(url)
+        }
+        await audio.play()
+      } else {
+        setIsSpeaking(false)
+      }
+    } catch {
+      setIsSpeaking(false)
+    }
+  }
+
+  const quickActions = [
+    "Summarize notes",
+    "Create task list",
+    "Draft email"
+  ]
+
   return (
-    <div className="h-full glass-card rounded-2xl border border-white/10 overflow-hidden group hover:border-cyan-500/30 transition-colors">
+    <div className="h-full glass-card rounded-2xl border border-white/10 overflow-hidden bg-[#1a1f2e]/80 backdrop-blur-xl">
       {/* Header */}
-      <div className="p-6 pb-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-mono text-cyan-400">Notion Agent</span>
-          <motion.div
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="flex items-center gap-1"
-          >
-            <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-            <span className="text-[10px] text-green-400">LIVE</span>
-          </motion.div>
+      <div className="p-5 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-white font-semibold">Notion AI</h3>
+            <p className="text-white/50 text-xs">Always ready to help</p>
+          </div>
+          {isSpeaking && (
+            <motion.div
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 1, repeat: Infinity }}
+              className="ml-auto flex items-center gap-1 text-cyan-400"
+            >
+              <Volume2 className="w-4 h-4" />
+              <span className="text-xs">Speaking</span>
+            </motion.div>
+          )}
         </div>
-        <h3 className="text-xl font-semibold text-white mb-1">
-          You assign the tasks.
-        </h3>
-        <p className="text-white/60 text-sm">Notion Agent does the work.</p>
-        <Button variant="ghost" size="sm" className="mt-3 p-0 h-auto text-cyan-400 hover:text-cyan-300">
-          <ArrowRight className="h-5 w-5" />
-        </Button>
       </div>
 
-      {/* AI Interface Panel */}
-      <div className="mx-4 mb-4 rounded-xl bg-gradient-to-br from-amber-400/90 to-orange-400/90 p-4 relative overflow-hidden">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-        </div>
-        
-        <p className="text-white font-medium mb-4">How can I help you today?</p>
-
-        <AnimatePresence mode="wait">
-          {showOptions ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="space-y-2"
-            >
-              {options.map((opt, i) => (
-                <motion.button
-                  key={opt.text}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  onClick={() => handleOptionClick(opt.text)}
-                  className="flex items-center gap-2 w-full text-left text-white/90 hover:text-white text-sm py-1 transition-colors"
+      {/* Chat area */}
+      <div className="p-5 min-h-[300px] flex flex-col">
+        {/* Quick actions */}
+        {!response && !isProcessing && (
+          <div className="mb-4">
+            <p className="text-white/50 text-sm mb-3">Quick actions:</p>
+            <div className="flex flex-wrap gap-2">
+              {quickActions.map((action) => (
+                <button
+                  key={action}
+                  onClick={() => {
+                    setUserInput(action)
+                  }}
+                  className="px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm hover:bg-cyan-500/20 transition-colors"
                 >
-                  <span className="w-5 h-5 rounded bg-white/20 flex items-center justify-center text-[10px] font-mono">
-                    {opt.icon}
-                  </span>
-                  {opt.text}
-                </motion.button>
+                  {action}
+                </button>
               ))}
-            </motion.div>
-          ) : (
+            </div>
+          </div>
+        )}
+
+        {/* AI Response */}
+        <AnimatePresence mode="wait">
+          {(response || isProcessing) && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-white/90 text-sm"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex-1 mb-4"
             >
-              {response}
-              {isTyping && (
-                <motion.span
-                  animate={{ opacity: [0, 1, 0] }}
-                  transition={{ duration: 0.5, repeat: Infinity }}
-                  className="inline-block w-2 h-4 bg-white ml-1"
-                />
-              )}
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex-1 p-4 rounded-xl bg-white/5 border border-white/10">
+                  {isProcessing && !response ? (
+                    <motion.div
+                      animate={{ opacity: [0.4, 1, 0.4] }}
+                      transition={{ duration: 1, repeat: Infinity }}
+                      className="text-white/60"
+                    >
+                      Thinking...
+                    </motion.div>
+                  ) : (
+                    <p className="text-white/90 text-sm leading-relaxed">
+                      {response}
+                      {isProcessing && (
+                        <motion.span
+                          animate={{ opacity: [0, 1, 0] }}
+                          transition={{ duration: 0.5, repeat: Infinity }}
+                          className="inline-block w-2 h-4 bg-cyan-400 ml-1"
+                        />
+                      )}
+                    </p>
+                  )}
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Input area */}
+        <div className="mt-auto">
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/10">
+            <Search className="w-4 h-4 text-white/40 flex-shrink-0" />
+            <input
+              type="text"
+              value={userInput}
+              onChange={(e) => setUserInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+              placeholder="Ask anything..."
+              className="flex-1 bg-transparent text-white placeholder-white/40 outline-none text-sm"
+              disabled={isProcessing}
+            />
+            <button className="p-1.5 text-white/40 hover:text-white/70 transition-colors">
+              <Mic className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isProcessing || !userInput.trim()}
+              className="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 transition-colors disabled:opacity-50"
+            >
+              {isProcessing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
 }
 
-// Status Update Card
-function StatusUpdateCard() {
-  const [currentStep, setCurrentStep] = useState(0)
-  const steps = [
-    "Draft my weekly update in Weekly status @Today with updates from the current sprint",
-    "I'll help you draft your standard weekly update. Let me fill it in with all the relevant progress from Task tracker.",
-    "Updated page: Weekly status @Today",
-    "Updated 4 pages",
-    "You should be all set now!"
+// Try it yourself card with interactive tasks
+function TryItYourselfCard() {
+  const [selectedTask, setSelectedTask] = useState<string | null>("Summarize notes")
+  const [isExecuting, setIsExecuting] = useState(false)
+  const [result, setResult] = useState("")
+  const [isSpeaking, setIsSpeaking] = useState(false)
+
+  const tasks = [
+    { id: "summarize", label: "Summarize notes", prompt: "Summarize my meeting notes into key action items" },
+    { id: "generate", label: "Generate tasks", prompt: "Generate a task list from my project requirements" },
+    { id: "find", label: "Find documents", prompt: "Find all documents related to Q3 planning" },
+    { id: "draft", label: "Draft response", prompt: "Draft a professional response to this email" },
   ]
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentStep(prev => (prev + 1) % steps.length)
-    }, 3000)
-    return () => clearInterval(interval)
-  }, [])
+  const handleTaskClick = async (task: typeof tasks[0]) => {
+    if (isExecuting) return
+    
+    setSelectedTask(task.label)
+    setIsExecuting(true)
+    setResult("")
+    
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          message: `User wants to: ${task.prompt}. Provide a brief, helpful response showing what Notion AI would do (2-3 sentences max).`
+        }),
+      })
+      
+      let text = "Processing your request..."
+      if (response.ok) {
+        const data = await response.json()
+        text = data.response || text
+      }
+      
+      // Typewriter
+      for (let i = 0; i <= text.length; i++) {
+        await new Promise(r => setTimeout(r, 15))
+        setResult(text.slice(0, i))
+      }
+      
+      setIsExecuting(false)
+      
+      // Voice
+      setIsSpeaking(true)
+      const voiceRes = await fetch("/api/voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      })
+      
+      if (voiceRes.ok) {
+        const blob = await voiceRes.blob()
+        const url = URL.createObjectURL(blob)
+        const audio = new Audio(url)
+        audio.volume = 0.6
+        audio.onended = () => {
+          setIsSpeaking(false)
+          URL.revokeObjectURL(url)
+        }
+        await audio.play()
+      } else {
+        setIsSpeaking(false)
+      }
+    } catch {
+      setResult("Ready to help with your task!")
+      setIsExecuting(false)
+    }
+  }
 
   return (
-    <div className="h-full glass-card rounded-2xl border border-white/10 overflow-hidden group hover:border-cyan-500/30 transition-colors">
-      <div className="p-4 flex items-center justify-between border-b border-white/10">
-        <div className="flex items-center gap-2">
-          <span className="text-white/80 text-sm">Status update</span>
+    <div className="h-full glass-card rounded-2xl border border-white/10 overflow-hidden bg-[#1a1f2e]/80 backdrop-blur-xl p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-semibold text-white">Try it yourself</h3>
+        {isSpeaking && (
           <motion.div
-            animate={{ rotate: [0, 180, 360] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-            className="w-4 h-4 rounded-full border border-cyan-400/50"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <motion.div
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-[10px] font-mono"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1, repeat: Infinity }}
+            className="flex items-center gap-1 text-cyan-400"
           >
-            SYNCED
+            <Volume2 className="w-4 h-4" />
+            <span className="text-xs">Speaking</span>
           </motion.div>
-        </div>
+        )}
       </div>
 
-      <div className="p-6">
-        {/* Request bubble */}
-        <div className="bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-lg p-3 mb-4 border border-cyan-500/20">
-          <p className="text-white/90 text-sm leading-relaxed">
-            Draft my weekly update in <span className="text-cyan-400">Weekly status @Today</span> with updates from the current sprint
-          </p>
-        </div>
-
-        {/* AI Response */}
-        <div className="space-y-3">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="text-white/70 text-sm"
-            >
-              {currentStep === 0 && (
-                <p>I&apos;ll help you draft your standard weekly update. Let me fill it in with all the relevant progress from <span className="text-purple-400">Task tracker</span>.</p>
+      {/* Task buttons */}
+      <div className="space-y-3">
+        {tasks.map((task) => (
+          <button
+            key={task.id}
+            onClick={() => handleTaskClick(task)}
+            disabled={isExecuting}
+            className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all text-left ${
+              selectedTask === task.label
+                ? "bg-cyan-500/10 border-cyan-500/30"
+                : "bg-white/5 border-white/10 hover:bg-white/10"
+            }`}
+          >
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              selectedTask === task.label ? "bg-cyan-500/20" : "bg-white/10"
+            }`}>
+              {selectedTask === task.label && isExecuting ? (
+                <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+              ) : (
+                <CheckCircle2 className={`w-4 h-4 ${
+                  selectedTask === task.label ? "text-cyan-400" : "text-white/40"
+                }`} />
               )}
-              {currentStep === 1 && (
-                <div className="flex items-center gap-2 text-green-400">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Updated page: Weekly status @Today</span>
-                </div>
-              )}
-              {currentStep === 2 && (
-                <div className="flex items-center gap-2 text-cyan-400">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Updated 4 pages</span>
-                </div>
-              )}
-              {currentStep >= 3 && (
-                <p className="text-green-400 font-medium">You should be all set now!</p>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/10">
-          <button className="flex items-center gap-1 text-white/50 hover:text-white/80 text-xs transition-colors">
-            <span>Undo</span>
+            </div>
+            <span className={`font-medium ${
+              selectedTask === task.label ? "text-white" : "text-white/70"
+            }`}>
+              {task.label}
+            </span>
           </button>
-        </div>
+        ))}
       </div>
 
-      {/* Character icon */}
-      <div className="absolute bottom-4 right-4">
-        <motion.div
-          animate={{ y: [0, -5, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center"
-        >
-          <span className="text-2xl">🏗️</span>
-        </motion.div>
-      </div>
+      {/* Result area */}
+      <AnimatePresence>
+        {result && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 p-4 rounded-xl bg-gradient-to-br from-cyan-500/10 to-purple-500/10 border border-cyan-500/20"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <span className="text-xs text-cyan-400 font-medium">AI Response</span>
+            </div>
+            <p className="text-white/80 text-sm leading-relaxed">{result}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
 
 // Enterprise Search Card
 function EnterpriseSearchCard() {
+  const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
-  const [activeApps, setActiveApps] = useState<number[]>([])
-  const [searchResults, setSearchResults] = useState<string[]>([])
+  const [results, setResults] = useState<string[]>([])
+  const [isSpeaking, setIsSpeaking] = useState(false)
 
-  const results = [
-    "Dynamic pricing automation: AI-powered rate suggestions",
-    "Multi-property calendar sync: Unified management across platforms",
-    "Guest communication templates: Customizable workflows"
-  ]
-
-  useEffect(() => {
-    // Simulate continuous searching
-    const interval = setInterval(() => {
-      setIsSearching(true)
-      setActiveApps([])
-      setSearchResults([])
-
-      // Pulse through apps
-      connectedApps.forEach((_, i) => {
-        setTimeout(() => {
-          setActiveApps(prev => [...prev, i])
-        }, i * 200)
+  const handleSearch = async () => {
+    if (!searchQuery.trim() || isSearching) return
+    
+    setIsSearching(true)
+    setResults([])
+    
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          message: `User is searching for: "${searchQuery}". Generate 3 relevant search results as a JSON array of strings. Example: ["Result 1", "Result 2", "Result 3"]. Return ONLY the JSON array.`
+        }),
       })
-
-      // Show results
-      setTimeout(() => {
-        results.forEach((_, i) => {
-          setTimeout(() => {
-            setSearchResults(prev => [...prev, results[i]])
-          }, i * 300)
-        })
-        setIsSearching(false)
-      }, 1500)
-    }, 6000)
-
-    // Initial run
-    setTimeout(() => {
-      setIsSearching(true)
-      connectedApps.forEach((_, i) => {
-        setTimeout(() => setActiveApps(prev => [...prev, i]), i * 200)
+      
+      let searchResults = [
+        "Found 12 matching documents in your workspace",
+        "3 related tasks in current sprint",
+        "5 team discussions mentioning this topic"
+      ]
+      
+      if (response.ok) {
+        const data = await response.json()
+        try {
+          const parsed = JSON.parse(data.response)
+          if (Array.isArray(parsed)) searchResults = parsed.slice(0, 3)
+        } catch {
+          // Use default
+        }
+      }
+      
+      // Show results one by one
+      for (let i = 0; i < searchResults.length; i++) {
+        await new Promise(r => setTimeout(r, 300))
+        setResults(prev => [...prev, searchResults[i]])
+      }
+      
+      setIsSearching(false)
+      
+      // Voice summary
+      const summary = `Found ${searchResults.length} results for ${searchQuery}`
+      setIsSpeaking(true)
+      const voiceRes = await fetch("/api/voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: summary }),
       })
-      setTimeout(() => {
-        results.forEach((_, i) => {
-          setTimeout(() => setSearchResults(prev => [...prev, results[i]]), i * 300)
-        })
-        setIsSearching(false)
-      }, 1500)
-    }, 500)
-
-    return () => clearInterval(interval)
-  }, [])
+      
+      if (voiceRes.ok) {
+        const blob = await voiceRes.blob()
+        const audio = new Audio(URL.createObjectURL(blob))
+        audio.volume = 0.6
+        audio.onended = () => setIsSpeaking(false)
+        await audio.play()
+      } else {
+        setIsSpeaking(false)
+      }
+    } catch {
+      setResults(["Search your entire workspace instantly"])
+      setIsSearching(false)
+    }
+  }
 
   return (
-    <div className="h-full glass-card rounded-2xl border border-white/10 overflow-hidden group hover:border-cyan-500/30 transition-colors">
-      {/* Header */}
-      <div className="p-6 pb-4">
+    <div className="h-full glass-card rounded-2xl border border-white/10 overflow-hidden bg-[#1a1f2e]/80 backdrop-blur-xl">
+      <div className="p-5">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-mono text-cyan-400">Enterprise Search</span>
-          <span className="text-[10px] text-white/40">{connectedApps.length} sources synced</span>
+          {isSpeaking && (
+            <motion.div
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 1, repeat: Infinity }}
+              className="flex items-center gap-1 text-cyan-400"
+            >
+              <Volume2 className="w-3 h-3" />
+            </motion.div>
+          )}
         </div>
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-semibold text-white">One search for everything.</h3>
-          <Button variant="ghost" size="sm" className="p-0 h-auto text-cyan-400 hover:text-cyan-300">
-            <ArrowRight className="h-5 w-5" />
-          </Button>
+          <ArrowRight className="h-5 w-5 text-cyan-400" />
         </div>
       </div>
 
-      {/* Search Interface */}
-      <div className="mx-4 mb-4 rounded-xl bg-gradient-to-br from-rose-400/90 to-red-400/90 p-4">
-        {/* Search bar */}
-        <div className="bg-white/20 rounded-lg px-3 py-2 mb-4 flex items-center gap-2">
+      <div className="mx-4 mb-4 rounded-xl bg-gradient-to-br from-rose-500/90 to-orange-500/90 p-4">
+        {/* Search input */}
+        <div className="flex items-center gap-2 bg-white/20 rounded-lg px-3 py-2 mb-4">
           <Search className="w-4 h-4 text-white/70" />
-          <span className="text-white/90 text-sm">top customer requests this quarter</span>
-          {isSearching && (
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="ml-auto w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-            />
-          )}
-        </div>
-
-        {/* Results count */}
-        <div className="flex items-center gap-2 mb-3 text-white/80 text-xs">
-          <span>99+ results</span>
-          <div className="flex gap-1">
-            {connectedApps.slice(0, 4).map((app, i) => (
-              <motion.div
-                key={app.name}
-                animate={{ 
-                  scale: activeApps.includes(i) ? [1, 1.2, 1] : 1,
-                  opacity: activeApps.includes(i) ? 1 : 0.5
-                }}
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: app.color }}
-              />
-            ))}
-          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            placeholder="Search across all your apps..."
+            className="flex-1 bg-transparent text-white placeholder-white/50 outline-none text-sm"
+          />
+          <button
+            onClick={handleSearch}
+            disabled={isSearching}
+            className="p-1 rounded hover:bg-white/20 transition-colors"
+          >
+            {isSearching ? (
+              <Loader2 className="w-4 h-4 text-white animate-spin" />
+            ) : (
+              <Send className="w-4 h-4 text-white" />
+            )}
+          </button>
         </div>
 
         {/* Results */}
-        <div className="space-y-2">
-          <p className="text-white font-medium text-sm">Top 10 Feature Requests</p>
-          <p className="text-white/70 text-xs">Host Tools & Listing Management (highest priority)</p>
-          
-          <div className="space-y-1.5 mt-3">
-            {searchResults.map((result, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="text-white/80 text-xs flex items-start gap-2"
-              >
-                <span className="text-white/50">{i + 1}.</span>
-                <span>{result}</span>
-              </motion.div>
-            ))}
-          </div>
+        <div className="space-y-2 min-h-[100px]">
+          {results.map((result, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-start gap-2 text-white/90 text-sm"
+            >
+              <CheckCircle2 className="w-4 h-4 text-white/70 mt-0.5 flex-shrink-0" />
+              <span>{result}</span>
+            </motion.div>
+          ))}
+          {results.length === 0 && !isSearching && (
+            <p className="text-white/60 text-sm">Search to see AI-powered results</p>
+          )}
         </div>
 
-        {/* Connected Apps */}
+        {/* Connected apps */}
         <div className="flex items-center gap-2 mt-4 pt-3 border-t border-white/20">
-          {connectedApps.map((app, i) => (
-            <motion.div
+          {connectedApps.map((app) => (
+            <div
               key={app.name}
-              animate={{ 
-                scale: activeApps.includes(i) ? [1, 1.1, 1] : 1
-              }}
-              transition={{ duration: 0.3 }}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold"
               style={{ backgroundColor: app.color }}
             >
               {app.icon}
-            </motion.div>
+            </div>
           ))}
-          <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-white/60">+</div>
+          <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center text-white/60 text-sm">+</div>
         </div>
       </div>
     </div>
@@ -553,7 +614,8 @@ function MeetingNotesCard() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentLine, setCurrentLine] = useState(0)
   const [isSpeaking, setIsSpeaking] = useState(false)
-  const audioRef = useRef<HTMLAudioElement>(null)
+  const [customTopic, setCustomTopic] = useState("")
+  const [aiSummary, setAiSummary] = useState("")
 
   const transcript = [
     "Joyce provided an update on the landing page improvements.",
@@ -570,39 +632,56 @@ function MeetingNotesCard() {
     return () => clearInterval(interval)
   }, [])
 
-  const handleVoicePlay = async () => {
+  const handleGenerateSummary = async () => {
     if (isSpeaking) return
     
+    const topic = customTopic || "meeting notes"
     setIsSpeaking(true)
+    setAiSummary("")
+    
     try {
-      const response = await fetch("/api/voice", {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          text: "Meeting summary: Joyce discussed landing page improvements. Key action items include team review tomorrow and launch next week." 
+          message: `Generate a brief meeting summary about: ${topic}. Include 2-3 key points and action items. Keep it under 50 words.`
         }),
       })
       
+      let summary = "Meeting summary: Key updates discussed. Action items assigned. Follow-up scheduled for next week."
+      
       if (response.ok) {
-        const blob = await response.blob()
-        const url = URL.createObjectURL(blob)
-        if (audioRef.current) {
-          audioRef.current.src = url
-          audioRef.current.volume = 0.7
-          await audioRef.current.play()
-        }
+        const data = await response.json()
+        summary = data.response || summary
       }
-    } catch (error) {
-      // Silent fail
+      
+      setAiSummary(summary)
+      
+      // Voice
+      const voiceRes = await fetch("/api/voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: summary }),
+      })
+      
+      if (voiceRes.ok) {
+        const blob = await voiceRes.blob()
+        const audio = new Audio(URL.createObjectURL(blob))
+        audio.volume = 0.7
+        audio.onended = () => setIsSpeaking(false)
+        await audio.play()
+      } else {
+        setIsSpeaking(false)
+      }
+    } catch {
+      setAiSummary("Meeting summary ready for playback.")
+      setIsSpeaking(false)
     }
   }
 
   return (
-    <div className="h-full glass-card rounded-2xl border border-white/10 overflow-hidden group hover:border-cyan-500/30 transition-colors">
-      <audio ref={audioRef} onEnded={() => setIsSpeaking(false)} />
-      
-      {/* Header */}
-      <div className="p-6 pb-4">
+    <div className="h-full glass-card rounded-2xl border border-white/10 overflow-hidden bg-[#1a1f2e]/80 backdrop-blur-xl">
+      <div className="p-5">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-mono text-cyan-400">AI Meeting Notes</span>
           <motion.div
@@ -616,13 +695,10 @@ function MeetingNotesCard() {
         </div>
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-semibold text-white">Perfect notes, every time.</h3>
-          <Button variant="ghost" size="sm" className="p-0 h-auto text-cyan-400 hover:text-cyan-300">
-            <ArrowRight className="h-5 w-5" />
-          </Button>
+          <ArrowRight className="h-5 w-5 text-cyan-400" />
         </div>
       </div>
 
-      {/* Meeting Interface */}
       <div className="mx-4 mb-4 rounded-xl bg-white/5 border border-white/10 overflow-hidden">
         {/* Meeting header */}
         <div className="p-3 border-b border-white/10 flex items-center justify-between">
@@ -630,10 +706,20 @@ function MeetingNotesCard() {
             <Calendar className="w-4 h-4 text-cyan-400" />
             <span className="text-white text-sm font-medium">Joyce & Sam weekly 1:1</span>
           </div>
-          <span className="text-white/50 text-xs">June 2</span>
+          <div className="flex items-center gap-2">
+            {participants.map((p) => (
+              <div
+                key={p.name}
+                className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                style={{ backgroundColor: p.color }}
+              >
+                {p.name[0]}
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs and waveform */}
         <div className="flex items-center gap-4 px-3 py-2 border-b border-white/10">
           {["Summary", "Notes", "Transcript"].map((tab, i) => (
             <button
@@ -644,19 +730,12 @@ function MeetingNotesCard() {
             </button>
           ))}
           
-          {/* Audio waveform */}
           <div className="ml-auto flex items-center gap-0.5">
-            {[...Array(20)].map((_, i) => (
+            {[...Array(15)].map((_, i) => (
               <motion.div
                 key={i}
-                animate={{ 
-                  height: isPlaying ? [4, 12, 4] : 4 
-                }}
-                transition={{ 
-                  duration: 0.3, 
-                  repeat: isPlaying ? Infinity : 0,
-                  delay: i * 0.05 
-                }}
+                animate={{ height: isPlaying ? [4, 12, 4] : 4 }}
+                transition={{ duration: 0.3, repeat: isPlaying ? Infinity : 0, delay: i * 0.05 }}
                 className="w-0.5 bg-cyan-400/50 rounded-full"
                 style={{ height: 4 }}
               />
@@ -667,19 +746,13 @@ function MeetingNotesCard() {
             onClick={() => setIsPlaying(!isPlaying)}
             className="ml-2 p-1 rounded hover:bg-white/10 transition-colors"
           >
-            {isPlaying ? (
-              <Pause className="w-3 h-3 text-white" />
-            ) : (
-              <Play className="w-3 h-3 text-white" />
-            )}
+            {isPlaying ? <Pause className="w-3 h-3 text-white" /> : <Play className="w-3 h-3 text-white" />}
           </button>
         </div>
 
         {/* Content */}
         <div className="p-4 space-y-3">
-          <p className="text-cyan-400 text-sm font-medium">Current progress</p>
-          
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-[120px] overflow-hidden">
             {transcript.slice(0, currentLine + 1).map((line, i) => (
               <motion.p
                 key={i}
@@ -690,43 +763,37 @@ function MeetingNotesCard() {
                 {line}
               </motion.p>
             ))}
-            
-            {/* Typing indicator */}
-            <motion.div
-              animate={{ opacity: [0.3, 1, 0.3] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="flex items-center gap-1"
-            >
-              <div className="w-1 h-1 rounded-full bg-cyan-400" />
-              <div className="w-1 h-1 rounded-full bg-cyan-400" />
-              <div className="w-1 h-1 rounded-full bg-cyan-400" />
-            </motion.div>
           </div>
 
-          {/* Voice playback button */}
-          <button
-            onClick={handleVoicePlay}
-            disabled={isSpeaking}
-            className="mt-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 text-xs hover:bg-cyan-500/30 transition-colors disabled:opacity-50"
-          >
-            <Volume2 className="w-3 h-3" />
-            {isSpeaking ? "Speaking..." : "Play Summary"}
-          </button>
-        </div>
-
-        {/* Participants */}
-        <div className="absolute bottom-20 right-6 flex -space-x-2">
-          {participants.map((p, i) => (
-            <motion.div
-              key={p.name}
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
-              className="w-8 h-8 rounded-full border-2 border-[#0a1628] flex items-center justify-center text-white text-xs font-bold"
-              style={{ backgroundColor: p.color }}
+          {/* Custom topic input */}
+          <div className="flex items-center gap-2 mt-4">
+            <input
+              type="text"
+              value={customTopic}
+              onChange={(e) => setCustomTopic(e.target.value)}
+              placeholder="Enter topic for summary..."
+              className="flex-1 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-white/40 text-xs outline-none"
+            />
+            <button
+              onClick={handleGenerateSummary}
+              disabled={isSpeaking}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 text-xs hover:bg-cyan-500/30 transition-colors disabled:opacity-50"
             >
-              {p.name[0]}
+              <Volume2 className="w-3 h-3" />
+              {isSpeaking ? "Speaking..." : "Generate"}
+            </button>
+          </div>
+
+          {/* AI Summary */}
+          {aiSummary && (
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-white/80 text-xs"
+            >
+              {aiSummary}
             </motion.div>
-          ))}
+          )}
         </div>
       </div>
     </div>
