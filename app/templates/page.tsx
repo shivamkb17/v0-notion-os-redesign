@@ -1,10 +1,12 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Search, Layout, Users, Briefcase, GraduationCap, Heart, Code, Palette, Star } from "lucide-react"
+import { Search, Layout, Users, Briefcase, GraduationCap, Heart, Code, Palette, Star, ArrowRight, Download, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Navbar } from "@/components/notion-os/navbar"
 import { Footer } from "@/components/notion-os/footer"
+import { PageAIAssistant } from "@/components/notion-os/page-ai-assistant"
+import { AIOverviewButton } from "@/components/notion-os/ai-overview-button"
 import { useState } from "react"
 
 const categories = [
@@ -18,14 +20,14 @@ const categories = [
 ]
 
 const featuredTemplates = [
-  { name: "Product Roadmap", category: "Work", creator: "Notion", downloads: "125K+" },
-  { name: "Meeting Notes", category: "Work", creator: "Notion", downloads: "89K+" },
-  { name: "Personal Wiki", category: "Personal", creator: "Community", downloads: "67K+" },
-  { name: "Habit Tracker", category: "Personal", creator: "Community", downloads: "54K+" },
-  { name: "Sprint Planning", category: "Engineering", creator: "Notion", downloads: "45K+" },
-  { name: "Design System", category: "Design", creator: "Community", downloads: "38K+" },
-  { name: "Course Notes", category: "Education", creator: "Community", downloads: "32K+" },
-  { name: "Team Wiki", category: "Teams", creator: "Notion", downloads: "78K+" }
+  { name: "Product Roadmap", category: "Work", creator: "Notion", downloads: "125K+", gradient: "from-blue-500/10 to-cyan-500/10" },
+  { name: "Meeting Notes", category: "Work", creator: "Notion", downloads: "89K+", gradient: "from-purple-500/10 to-pink-500/10" },
+  { name: "Personal Wiki", category: "Personal", creator: "Community", downloads: "67K+", gradient: "from-amber-500/10 to-orange-500/10" },
+  { name: "Habit Tracker", category: "Personal", creator: "Community", downloads: "54K+", gradient: "from-green-500/10 to-emerald-500/10" },
+  { name: "Sprint Planning", category: "Engineering", creator: "Notion", downloads: "45K+", gradient: "from-red-500/10 to-rose-500/10" },
+  { name: "Design System", category: "Design", creator: "Community", downloads: "38K+", gradient: "from-pink-500/10 to-fuchsia-500/10" },
+  { name: "Course Notes", category: "Education", creator: "Community", downloads: "32K+", gradient: "from-indigo-500/10 to-blue-500/10" },
+  { name: "Team Wiki", category: "Teams", creator: "Notion", downloads: "78K+", gradient: "from-cyan-500/10 to-teal-500/10" }
 ]
 
 const featuredCreators = [
@@ -36,16 +38,16 @@ const featuredCreators = [
 ]
 
 const consultants = [
-  { name: "NotionFlows", description: "We partner with growing companies to design and implement digital workspaces." },
-  { name: "Konduit Operations", description: "Vancouver-based consultancy helping businesses build systems in Notion." },
-  { name: "Sanchana Selvaraj", description: "Trusted by 50+ companies across 120+ successful projects worldwide." }
+  { name: "NotionFlows", description: "We partner with growing companies to design and implement digital workspaces.", initial: "N" },
+  { name: "Konduit Operations", description: "Vancouver-based consultancy helping businesses build systems in Notion.", initial: "K" },
+  { name: "Sanchana Selvaraj", description: "Trusted by 50+ companies across 120+ successful projects worldwide.", initial: "S" }
 ]
 
 export default function TemplatesPage() {
   const [activeCategory, setActiveCategory] = useState("All")
   const [searchQuery, setSearchQuery] = useState("")
 
-  const filteredTemplates = featuredTemplates.filter(template => 
+  const filteredTemplates = featuredTemplates.filter(template =>
     (activeCategory === "All" || template.category === activeCategory) &&
     template.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
@@ -53,25 +55,45 @@ export default function TemplatesPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <main className="pt-24">
         {/* Hero */}
-        <section className="py-16 text-center">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="relative py-20 text-center overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0f1428] via-[#12173d] to-background" />
+          <div className="absolute inset-0 opacity-[0.03]">
+            <div className="absolute inset-0" style={{
+              backgroundImage: "linear-gradient(rgba(6, 182, 212, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(6, 182, 212, 0.3) 1px, transparent 1px)",
+              backgroundSize: "48px 48px"
+            }} />
+          </div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-cyan-500/8 rounded-full blur-[120px]" />
+
+          <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-500/20 bg-cyan-500/5 mb-8"
+            >
+              <Layout className="h-4 w-4 text-cyan-400" />
+              <span className="text-sm text-cyan-300">Templates</span>
+            </motion.div>
+
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-4xl sm:text-5xl font-bold text-foreground mb-6 text-balance"
+              transition={{ delay: 0.1 }}
+              className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 text-balance"
             >
-              Choose from <span className="text-primary text-glow">30,000+</span> Notion templates
+              Choose from{" "}
+              <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">30,000+</span>{" "}
+              templates
             </motion.h1>
-            
+
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-lg text-muted-foreground mb-8"
+              transition={{ delay: 0.2 }}
+              className="text-lg text-white/50 mb-10"
             >
               Find all the best templates and set-ups built by Notion&apos;s community
             </motion.p>
@@ -80,17 +102,17 @@ export default function TemplatesPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ delay: 0.3 }}
               className="max-w-xl mx-auto"
             >
-              <div className="flex items-center gap-3 glass-card rounded-xl px-4 py-3">
-                <Search className="h-5 w-5 text-muted-foreground" />
+              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 backdrop-blur-sm">
+                <Search className="h-5 w-5 text-white/30" />
                 <input
                   type="text"
                   placeholder="Search templates..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none"
+                  className="flex-1 bg-transparent text-white placeholder:text-white/30 focus:outline-none text-sm"
                 />
               </div>
             </motion.div>
@@ -98,24 +120,24 @@ export default function TemplatesPage() {
         </section>
 
         {/* Categories */}
-        <section className="py-8">
+        <section className="py-6">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-wrap justify-center gap-3">
-              {categories.map((category, index) => (
+            <div className="flex flex-wrap justify-center gap-2">
+              {categories.map((cat, i) => (
                 <motion.button
-                  key={category.name}
+                  key={cat.name}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => setActiveCategory(category.name)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
-                    activeCategory === category.name
-                      ? "bg-primary text-primary-foreground"
-                      : "glass-card text-muted-foreground hover:text-foreground"
+                  transition={{ delay: 0.4 + i * 0.03 }}
+                  onClick={() => setActiveCategory(cat.name)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    activeCategory === cat.name
+                      ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/20"
+                      : "bg-white/5 text-white/50 hover:text-white hover:bg-white/10 border border-white/10"
                   }`}
                 >
-                  <category.icon className="h-4 w-4" />
-                  <span className="text-sm font-medium">{category.name}</span>
+                  <cat.icon className="h-4 w-4" />
+                  <span>{cat.name}</span>
                 </motion.button>
               ))}
             </div>
@@ -123,29 +145,40 @@ export default function TemplatesPage() {
         </section>
 
         {/* Templates Grid */}
-        <section className="py-12">
+        <section className="relative py-12">
+          <AIOverviewButton
+            sectionId="templates-grid"
+            sectionTitle="Featured Templates"
+            sectionContext="Featured templates include: Product Roadmap (125K+ downloads), Meeting Notes (89K+), Personal Wiki (67K+), Habit Tracker (54K+), Sprint Planning (45K+), Design System (38K+), Course Notes (32K+), and Team Wiki (78K+). Templates are filterable by categories: Work, Personal, Education, Engineering, Design, and Teams."
+            position="top-right"
+            allowQuestions={true}
+          />
+
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl font-bold text-foreground mb-8">Featured templates</h2>
-            
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {filteredTemplates.map((template, index) => (
+            <h2 className="text-2xl font-bold text-white mb-8">Featured templates</h2>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {filteredTemplates.map((t, i) => (
                 <motion.div
-                  key={template.name}
+                  key={t.name}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.05 }}
+                  transition={{ delay: i * 0.05 }}
                   whileHover={{ y: -5 }}
-                  className="glass-card rounded-xl overflow-hidden cursor-pointer group"
+                  className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden cursor-pointer group"
                 >
-                  <div className="aspect-video bg-muted flex items-center justify-center">
-                    <Layout className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <div className={`aspect-video bg-gradient-to-br ${t.gradient} flex items-center justify-center`}>
+                    <Layout className="h-8 w-8 text-white/20 group-hover:text-cyan-400 group-hover:scale-110 transition-all" />
                   </div>
                   <div className="p-4">
-                    <h3 className="font-semibold text-foreground mb-1">{template.name}</h3>
+                    <h3 className="font-semibold text-white mb-1">{t.name}</h3>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{template.creator}</span>
-                      <span className="text-primary">{template.downloads}</span>
+                      <span className="text-white/40">{t.creator}</span>
+                      <span className="flex items-center gap-1 text-cyan-400">
+                        <Download className="h-3 w-3" />
+                        {t.downloads}
+                      </span>
                     </div>
                   </div>
                 </motion.div>
@@ -153,41 +186,43 @@ export default function TemplatesPage() {
             </div>
 
             {filteredTemplates.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No templates found matching your criteria.</p>
+              <div className="text-center py-16">
+                <p className="text-white/40">No templates found matching your criteria.</p>
               </div>
             )}
           </div>
         </section>
 
         {/* Consultants */}
-        <section className="py-16 bg-gradient-to-b from-transparent via-primary/5 to-transparent">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="relative py-20">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/[0.02] to-transparent" />
+
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               className="text-center mb-12"
             >
-              <h2 className="text-2xl font-bold text-foreground mb-2">Work smarter with Notion experts</h2>
-              <p className="text-muted-foreground">Get personalized 1:1 help for your Notion setup from certified Consulting Partners.</p>
+              <h2 className="text-2xl font-bold text-white mb-2">Work smarter with Notion experts</h2>
+              <p className="text-white/40">Get personalized 1:1 help from certified Consulting Partners.</p>
             </motion.div>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              {consultants.map((consultant, index) => (
+            <div className="grid md:grid-cols-3 gap-4">
+              {consultants.map((c, i) => (
                 <motion.div
-                  key={consultant.name}
+                  key={c.name}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="glass-card rounded-xl p-6"
+                  transition={{ delay: i * 0.1 }}
+                  className="rounded-xl border border-white/10 bg-white/[0.02] p-6"
                 >
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                    <span className="text-lg font-bold text-primary">{consultant.name.charAt(0)}</span>
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center mb-4">
+                    <span className="text-lg font-bold text-white">{c.initial}</span>
                   </div>
-                  <h3 className="font-semibold text-foreground mb-2">{consultant.name}</h3>
-                  <p className="text-sm text-muted-foreground">{consultant.description}</p>
+                  <h3 className="font-semibold text-white mb-2">{c.name}</h3>
+                  <p className="text-sm text-white/40">{c.description}</p>
                 </motion.div>
               ))}
             </div>
@@ -195,29 +230,29 @@ export default function TemplatesPage() {
         </section>
 
         {/* Featured Creators */}
-        <section className="py-16">
+        <section className="py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl font-bold text-foreground mb-8">Featured creators</h2>
-            
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredCreators.map((creator, index) => (
+            <h2 className="text-2xl font-bold text-white mb-8">Featured creators</h2>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {featuredCreators.map((c, i) => (
                 <motion.div
-                  key={creator.name}
+                  key={c.name}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="glass-card rounded-xl p-6 text-center"
+                  transition={{ delay: i * 0.1 }}
+                  className="rounded-xl border border-white/10 bg-white/[0.02] p-6 text-center"
                 >
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto mb-4">
-                    <span className="text-xl font-bold text-white">{creator.name.charAt(0)}</span>
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-500 flex items-center justify-center mx-auto mb-4">
+                    <span className="text-lg font-bold text-white">{c.name.charAt(0)}</span>
                   </div>
-                  <h3 className="font-semibold text-foreground mb-1">{creator.name}</h3>
-                  <div className="flex items-center justify-center gap-1 text-sm text-primary mb-2">
-                    <Star className="h-4 w-4" />
-                    <span>{creator.templates} templates</span>
+                  <h3 className="font-semibold text-white mb-1">{c.name}</h3>
+                  <div className="flex items-center justify-center gap-1.5 text-sm text-cyan-400 mb-3">
+                    <Star className="h-3.5 w-3.5" />
+                    <span>{c.templates} templates</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">{creator.description}</p>
+                  <p className="text-sm text-white/40">{c.description}</p>
                 </motion.div>
               ))}
             </div>
@@ -225,29 +260,41 @@ export default function TemplatesPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-16">
+        <section className="py-24">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="glass-card rounded-2xl p-12"
+              className="rounded-2xl p-[1px] bg-gradient-to-r from-cyan-500/50 to-blue-500/50"
             >
-              <h2 className="text-3xl font-bold text-foreground mb-4">
-                Ready to get started?
-              </h2>
-              <p className="text-muted-foreground mb-8">
-                Browse thousands of templates or create your own.
-              </p>
-              <Button size="lg" className="bg-gradient-to-r from-primary to-accent">
-                Explore all templates
-              </Button>
+              <div className="rounded-2xl bg-[#0a0a1a] px-10 py-14">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center mx-auto mb-6">
+                  <Sparkles className="h-7 w-7 text-white" />
+                </div>
+                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                  Ready to get started?
+                </h2>
+                <p className="text-white/40 mb-8">
+                  Browse thousands of templates or create your own.
+                </p>
+                <Button size="lg" className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-90 text-white shadow-lg shadow-cyan-500/20">
+                  Explore all templates
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
             </motion.div>
           </div>
         </section>
       </main>
 
       <Footer />
+
+      <PageAIAssistant
+        pageName="Templates"
+        accentColor="cyan"
+        pageContext="Notion Templates page. 30,000+ templates across categories: Work, Personal, Education, Engineering, Design, Teams. Featured templates: Product Roadmap (125K+), Meeting Notes (89K+), Personal Wiki (67K+), Sprint Planning (45K+), Team Wiki (78K+). Featured creators include Abdo Karmalla (101 templates), Mindful Yesmads (24), Laura Miller (13). Certified consulting partners available for 1:1 help."
+      />
     </div>
   )
 }
