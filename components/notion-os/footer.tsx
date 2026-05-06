@@ -14,24 +14,24 @@ const footerLinks = {
   ],
   Solutions: [
     { name: "Enterprise", href: "/enterprise" },
-    { name: "Small Business", href: "/teams" },
-    { name: "Personal", href: "/personal" },
-    { name: "Remote Work", href: "/remote" },
-    { name: "Startups", href: "/startups" },
+    { name: "Small Business", href: "https://www.notion.so/teams", external: true },
+    { name: "Personal", href: "https://www.notion.so/personal", external: true },
+    { name: "Remote Work", href: "https://www.notion.so/remote", external: true },
+    { name: "Startups", href: "https://www.notion.so/startups", external: true },
   ],
   Resources: [
     { name: "Templates", href: "/templates" },
-    { name: "Help Center", href: "/help" },
-    { name: "Guides", href: "/guides" },
-    { name: "API Docs", href: "/developers" },
-    { name: "Community", href: "/community" },
+    { name: "Help Center", href: "https://www.notion.so/help", external: true },
+    { name: "Guides", href: "https://www.notion.so/guides", external: true },
+    { name: "API Docs", href: "https://developers.notion.com", external: true },
+    { name: "Community", href: "https://www.notion.so/community", external: true },
   ],
   Company: [
-    { name: "About", href: "/about" },
-    { name: "Careers", href: "/careers" },
-    { name: "Blog", href: "/blog" },
-    { name: "Press", href: "/press" },
-    { name: "Contact", href: "/contact" },
+    { name: "About", href: "https://www.notion.so/about", external: true },
+    { name: "Careers", href: "https://www.notion.so/careers", external: true },
+    { name: "Blog", href: "https://www.notion.so/blog", external: true },
+    { name: "Press", href: "https://www.notion.so/press", external: true },
+    { name: "Pricing", href: "/pricing" },
   ],
 }
 
@@ -79,12 +79,23 @@ export function Footer() {
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link.name}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {link.name}
-                    </Link>
+                    {"external" in link && link.external ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        {link.name}
+                      </a>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        {link.name}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -97,9 +108,9 @@ export function Footer() {
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>&copy; {new Date().getFullYear()} Notion Labs, Inc.</span>
             <span className="hidden sm:inline">·</span>
-            <Link href="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-primary transition-colors">Terms</Link>
-            <Link href="/security" className="hover:text-primary transition-colors">Security</Link>
+            <a href="https://www.notion.so/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Privacy</a>
+            <a href="https://www.notion.so/terms" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Terms</a>
+            <a href="https://www.notion.so/security" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Security</a>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Globe className="h-4 w-4" />

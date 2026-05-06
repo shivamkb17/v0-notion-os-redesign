@@ -4,8 +4,11 @@ import { motion } from "framer-motion"
 import { ArrowRight, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AIOverviewButton } from "./ai-overview-button"
+import { useElevenLabsSfx } from "@/hooks/use-elevenlabs-sfx"
 
 export function CTASection() {
+  const { playSfx } = useElevenLabsSfx()
+
   return (
     <section className="relative py-24 overflow-hidden">
       {/* AI Overview Button */}
@@ -53,6 +56,7 @@ export function CTASection() {
             <Button 
               size="lg" 
               className="bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all glow-primary text-base px-8"
+              onClick={() => playSfx("bright positive confirmation chime, success", 1.0, 0.25)}
             >
               Get Notion free
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -61,6 +65,7 @@ export function CTASection() {
               size="lg" 
               variant="outline" 
               className="glass-card border-primary/30 hover:bg-primary/10 text-base px-8"
+              onClick={() => playSfx("soft digital click, subtle UI feedback", 0.5, 0.2)}
             >
               Contact sales
             </Button>

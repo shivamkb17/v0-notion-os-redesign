@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Mic, MicOff, X, Volume2, VolumeX } from "lucide-react"
+import { Mic, X, Volume2, VolumeX, SkipForward, ChevronLeft, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const tourSteps = [
@@ -42,44 +42,93 @@ export function VoiceTour() {
   const [isActive, setIsActive] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const blobUrlRef = useRef<string | null>(null)
 
-  const speak = useCallback((text: string) => {
-    if (isMuted || typeof window === "undefined") return
-
-    // Cancel any ongoing speech
-    window.speechSynthesis?.cancel()
-
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.rate = 0.9
-    utterance.pitch = 1
-    utterance.volume = 0.8
-
-    utterance.onstart = () => setIsSpeaking(true)
-    utterance.onend = () => {
-      setIsSpeaking(false)
-      // Auto-advance to next step after speaking
-      if (currentStep < tourSteps.length - 1) {
-        setTimeout(() => {
-          setCurrentStep(prev => prev + 1)
-        }, 1000)
-      } else {
-        // Tour complete
-        setTimeout(() => {
-          setIsActive(false)
-          setCurrentStep(0)
-        }, 2000)
-      }
+  // Cleanup blob URL
+  const cleanupAudio = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ""
     }
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current)
+      blobUrlRef.current = null
+    }
+  }, [])
 
-    window.speechSynthesis?.speak(utterance)
-  }, [isMuted, currentStep])
+  // Speak using ElevenLabs API
+  const speakWithElevenLabs = useCallback(async (text: string) => {
+    if (isMuted) return
 
+    cleanupAudio()
+    setIsLoading(true)
+    setIsSpeaking(false)
+
+    try {
+      const response = await fetch("/api/voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      })
+
+      if (!response.ok) throw new Error("Voice API failed")
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      blobUrlRef.current = url
+
+      const audio = new Audio(url)
+      audio.volume = 0.75
+      audioRef.current = audio
+
+      audio.onplay = () => {
+        setIsLoading(false)
+        setIsSpeaking(true)
+      }
+
+      audio.onended = () => {
+        setIsSpeaking(false)
+        // Auto-advance after voice finishes
+        setCurrentStep(prev => {
+          if (prev < tourSteps.length - 1) {
+            return prev + 1
+          } else {
+            // Tour complete
+            setTimeout(() => {
+              setIsActive(false)
+              setCurrentStep(0)
+            }, 1500)
+            return prev
+          }
+        })
+      }
+
+      audio.onerror = () => {
+        setIsLoading(false)
+        setIsSpeaking(false)
+      }
+
+      await audio.play()
+    } catch {
+      setIsLoading(false)
+      setIsSpeaking(false)
+    }
+  }, [isMuted, cleanupAudio])
+
+  // Trigger speech when step changes
   useEffect(() => {
     if (isActive && !isMuted) {
-      speak(tourSteps[currentStep].message)
+      speakWithElevenLabs(tourSteps[currentStep].message)
     }
-  }, [isActive, currentStep, isMuted, speak])
+  }, [isActive, currentStep]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => cleanupAudio()
+  }, [cleanupAudio])
 
   const startTour = () => {
     setIsActive(true)
@@ -87,23 +136,43 @@ export function VoiceTour() {
   }
 
   const stopTour = () => {
-    window.speechSynthesis?.cancel()
+    cleanupAudio()
     setIsActive(false)
     setCurrentStep(0)
     setIsSpeaking(false)
+    setIsLoading(false)
   }
 
   const toggleMute = () => {
     if (!isMuted) {
-      window.speechSynthesis?.cancel()
+      cleanupAudio()
       setIsSpeaking(false)
+      setIsLoading(false)
     }
     setIsMuted(!isMuted)
   }
 
+  const skipStep = () => {
+    cleanupAudio()
+    setIsSpeaking(false)
+    setIsLoading(false)
+    if (currentStep < tourSteps.length - 1) {
+      setCurrentStep(prev => prev + 1)
+    } else {
+      stopTour()
+    }
+  }
+
+  const prevStep = () => {
+    cleanupAudio()
+    setIsSpeaking(false)
+    setIsLoading(false)
+    setCurrentStep(prev => Math.max(0, prev - 1))
+  }
+
   return (
     <>
-      {/* Floating mic button */}
+      {/* Floating tour button */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -115,6 +184,7 @@ export function VoiceTour() {
             onClick={startTour}
             size="lg"
             className="rounded-full w-14 h-14 bg-gradient-to-r from-primary to-accent hover:opacity-90 glow-primary p-0"
+            aria-label="Start voice tour"
           >
             <Mic className="h-6 w-6" />
           </Button>
@@ -125,6 +195,7 @@ export function VoiceTour() {
               size="icon"
               variant="outline"
               className="rounded-full glass-card"
+              aria-label={isMuted ? "Unmute" : "Mute"}
             >
               {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
             </Button>
@@ -133,6 +204,7 @@ export function VoiceTour() {
               size="icon"
               variant="outline"
               className="rounded-full glass-card"
+              aria-label="Stop tour"
             >
               <X className="h-5 w-5" />
             </Button>
@@ -140,67 +212,106 @@ export function VoiceTour() {
         )}
       </motion.div>
 
-      {/* Tour overlay */}
+      {/* Tour panel */}
       <AnimatePresence>
         {isActive && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-24 right-6 z-50 max-w-sm"
+            className="fixed bottom-24 right-6 z-50 w-80"
           >
-            <div className="glass-card rounded-2xl p-6 glow-primary">
-              {/* Speaking indicator */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`w-3 h-3 rounded-full ${isSpeaking ? "bg-primary animate-pulse" : "bg-muted"}`} />
-                <span className="text-sm text-muted-foreground">
-                  {isSpeaking ? "Speaking..." : isMuted ? "Muted" : "Paused"}
-                </span>
-                <span className="text-xs text-muted-foreground ml-auto">
-                  {currentStep + 1} / {tourSteps.length}
+            <div className="glass-card rounded-2xl overflow-hidden glow-primary">
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-3 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    {[0, 1, 2].map(i => (
+                      <motion.div
+                        key={i}
+                        className={`w-1 rounded-full ${isSpeaking ? "bg-primary" : "bg-muted-foreground/40"}`}
+                        animate={isSpeaking ? {
+                          height: [8, 16, 8],
+                        } : { height: 8 }}
+                        transition={{
+                          duration: 0.4,
+                          repeat: isSpeaking ? Infinity : 0,
+                          delay: i * 0.1,
+                        }}
+                        style={{ height: 8 }}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs font-mono text-muted-foreground">
+                    {isLoading ? "Loading voice..." : isSpeaking ? "ElevenLabs" : isMuted ? "Muted" : "Ready"}
+                  </span>
+                </div>
+                <span className="text-xs font-mono text-primary">
+                  {currentStep + 1}/{tourSteps.length}
                 </span>
               </div>
 
-              {/* Current message */}
-              <p className="text-foreground text-sm leading-relaxed">
-                {tourSteps[currentStep].message}
-              </p>
+              {/* Content */}
+              <div className="px-5 py-4">
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={currentStep}
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.25 }}
+                    className="text-foreground text-sm leading-relaxed"
+                  >
+                    {tourSteps[currentStep].message}
+                  </motion.p>
+                </AnimatePresence>
+
+                {/* Loading indicator */}
+                {isLoading && (
+                  <div className="flex items-center gap-2 mt-3 text-primary">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span className="text-xs">Generating voice...</span>
+                  </div>
+                )}
+              </div>
 
               {/* Progress bar */}
-              <div className="mt-4 h-1 bg-muted rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-primary to-accent"
-                  initial={{ width: "0%" }}
-                  animate={{ width: `${((currentStep + 1) / tourSteps.length) * 100}%` }}
-                  transition={{ duration: 0.5 }}
-                />
+              <div className="px-5">
+                <div className="h-0.5 bg-muted rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-primary to-accent"
+                    animate={{ width: `${((currentStep + 1) / tourSteps.length) * 100}%` }}
+                    transition={{ duration: 0.4 }}
+                  />
+                </div>
               </div>
 
               {/* Navigation */}
-              <div className="flex items-center justify-between mt-4">
+              <div className="flex items-center justify-between px-5 py-3">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                  onClick={prevStep}
                   disabled={currentStep === 0}
-                  className="text-muted-foreground"
+                  className="text-muted-foreground hover:text-foreground h-8 px-2"
                 >
-                  Previous
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Prev
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    if (currentStep < tourSteps.length - 1) {
-                      window.speechSynthesis?.cancel()
-                      setCurrentStep(currentStep + 1)
-                    } else {
-                      stopTour()
-                    }
-                  }}
-                  className="text-primary"
+                  onClick={skipStep}
+                  className="text-primary hover:text-primary/80 h-8 px-2"
                 >
-                  {currentStep < tourSteps.length - 1 ? "Next" : "Finish"}
+                  {currentStep < tourSteps.length - 1 ? (
+                    <>
+                      Skip
+                      <SkipForward className="h-4 w-4 ml-1" />
+                    </>
+                  ) : (
+                    "Finish"
+                  )}
                 </Button>
               </div>
             </div>

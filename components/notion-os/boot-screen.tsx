@@ -175,9 +175,10 @@ class GlitchSoundEngine {
   }
 
   destroy() {
-    if (this.audioContext) {
-      this.audioContext.close()
+    if (this.audioContext && this.audioContext.state !== "closed") {
+      this.audioContext.close().catch(() => {})
     }
+    this.initialized = false
   }
 }
 

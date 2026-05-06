@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X, ChevronDown, Sparkles, FileText, FolderKanban, Calendar, Globe, Bot, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NotionLogo } from "./notion-logo"
+import { useElevenLabsSfx } from "@/hooks/use-elevenlabs-sfx"
 
 const products = [
   { name: "Notion AI", description: "Your AI-powered assistant", icon: Sparkles, href: "/product/ai" },
@@ -29,6 +30,7 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
+  const { playSfx } = useElevenLabsSfx()
 
   // Track scroll for solid background
   useEffect(() => {
@@ -184,7 +186,10 @@ export function Navbar() {
           {/* Mobile Menu Button */}
           <button
             className="lg:hidden relative z-50 p-2 -mr-2 rounded-lg text-white/80 hover:text-white hover:bg-white/5 transition-colors"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={() => {
+              setIsOpen(!isOpen)
+              playSfx(isOpen ? "soft digital close, UI sound" : "soft digital open, UI whoosh", 0.5, 0.2)
+            }}
             aria-expanded={isOpen}
             aria-controls="mobile-menu"
             aria-label={isOpen ? "Close menu" : "Open menu"}

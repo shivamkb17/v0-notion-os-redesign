@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useElevenLabsSfx } from "@/hooks/use-elevenlabs-sfx"
 
 // Floating agent icons data
 const floatingAgents = [
@@ -34,6 +35,8 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ onVoiceTour }: HeroSectionProps) {
+  const { playSfx } = useElevenLabsSfx()
+
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-start overflow-hidden pt-24 pb-8">
       
@@ -127,6 +130,7 @@ export function HeroSection({ onVoiceTour }: HeroSectionProps) {
           <Button 
             size="lg" 
             className="bg-[#2f81f7] hover:bg-[#1f6feb] text-white text-base px-8 h-12 rounded-lg shadow-lg shadow-blue-500/20"
+            onClick={() => playSfx("bright positive confirmation chime, success", 1.0, 0.25)}
           >
             Get Notion free
             <ArrowRight className="ml-2 h-5 w-5" />
