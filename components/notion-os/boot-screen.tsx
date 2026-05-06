@@ -551,20 +551,6 @@ export function BootScreen({ onComplete }: BootScreenProps) {
               />
             )}
           </motion.div>
-            Skip Intro
-          </motion.button>
-
-          {/* Audio indicator */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: audioInitialized ? 1 : 0.3 }}
-            className="absolute top-6 left-6 flex items-center gap-2 text-xs font-mono"
-          >
-            <Volume2 className={`h-4 w-4 ${audioInitialized ? "text-cyan-400" : "text-white/30"}`} />
-            <span className={audioInitialized ? "text-cyan-400" : "text-white/30"}>
-              {audioInitialized ? "Audio Active" : "Move mouse for audio"}
-            </span>
-          </motion.div>
 
           {/* System stats - below audio indicator */}
           <div className="absolute top-16 left-6 space-y-2 font-mono text-xs">
