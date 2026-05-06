@@ -7,7 +7,6 @@ import { Navbar } from "@/components/notion-os/navbar"
 import { Footer } from "@/components/notion-os/footer"
 import { PageAIAssistant } from "@/components/notion-os/page-ai-assistant"
 import { AIOverviewButton } from "@/components/notion-os/ai-overview-button"
-import { VoiceNavAgent } from "@/components/notion-os/voice-nav-agent"
 
 const features = [
   { icon: Database, title: "Capture every detail in a database", description: "Track all your important information in one place, so nothing slips through the cracks." },
@@ -257,7 +256,6 @@ export default function ProjectsProductPage() {
         accentColor="purple"
         pageContext="Notion Projects product page. Features: databases for tracking, timeline views, charts, filters/sorts, workflow automations, forms. Project details: tasks/sub-tasks, status/assignee/due dates, database views, dependencies, my tasks, progress bars. AI Autofill for user stories and updates. Automated sprints with backlog grooming and bug tracking. Trusted by teams of 100-1000+."
       />
-      <VoiceNavAgent />
     </div>
   )
 }

@@ -8,7 +8,6 @@ import { Navbar } from "@/components/notion-os/navbar"
 import { Footer } from "@/components/notion-os/footer"
 import { PageAIAssistant } from "@/components/notion-os/page-ai-assistant"
 import { AIOverviewButton } from "@/components/notion-os/ai-overview-button"
-import { VoiceNavAgent } from "@/components/notion-os/voice-nav-agent"
 
 const plans = [
   {
@@ -383,7 +382,6 @@ export default function PricingPage() {
         accentColor="cyan"
         pageContext="Notion pricing page. Free ($0, individuals), Plus ($10/mo, small teams), Business ($20/mo, recommended, includes AI agents, meeting notes, enterprise search, SSO), Enterprise (custom pricing, advanced security, audit log, SCIM). Custom Agents addon: $10/1,000 credits. Annual billing saves 20%. Trusted by OpenAI, Figma, Ramp, NVIDIA."
       />
-      <VoiceNavAgent />
     </div>
   )
 }

@@ -7,7 +7,6 @@ import { Navbar } from "@/components/notion-os/navbar"
 import { Footer } from "@/components/notion-os/footer"
 import { PageAIAssistant } from "@/components/notion-os/page-ai-assistant"
 import { AIOverviewButton } from "@/components/notion-os/ai-overview-button"
-import { VoiceNavAgent } from "@/components/notion-os/voice-nav-agent"
 
 const securityFeatures = [
   { icon: Lock, title: "SSO & SAML", description: "Single sign-on with any SAML 2.0 provider. Enforce authentication policies across your organization." },
@@ -299,7 +298,6 @@ export default function EnterprisePage() {
         accentColor="cyan"
         pageContext="Notion Enterprise page. Security: SSO/SAML, SCIM provisioning, SOC 2 Type II, HIPAA, audit logs, data residency. Features: advanced permissions, managed users, 99.9% SLA, dedicated support, analytics dashboard, custom branding. Trusted by 100M+ users including OpenAI, Figma, NVIDIA, Vercel, Spotify. Custom pricing with 24/7 priority support."
       />
-      <VoiceNavAgent />
     </div>
   )
 }
