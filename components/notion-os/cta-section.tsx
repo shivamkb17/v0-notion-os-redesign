@@ -3,10 +3,20 @@
 import { motion } from "framer-motion"
 import { ArrowRight, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { AIOverviewButton } from "./ai-overview-button"
 
 export function CTASection() {
   return (
     <section className="relative py-24 overflow-hidden">
+      {/* AI Overview Button */}
+      <AIOverviewButton
+        sectionId="cta"
+        sectionTitle="Get Started"
+        sectionContext="This is the call-to-action section encouraging users to start using Notion for free. Notion offers a free tier for individuals with unlimited pages, plus paid tiers starting at $10/month for teams. Users can get started immediately or contact sales for enterprise needs."
+        position="top-right"
+        allowQuestions={true}
+      />
+      
       {/* Background glow */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-t from-primary/10 via-transparent to-transparent" />

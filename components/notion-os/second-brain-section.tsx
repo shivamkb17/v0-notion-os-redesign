@@ -1,7 +1,8 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { useEffect, useState } from "react"
+import { useEffect, useState }
+import { AIOverviewButton } from "./ai-overview-button" from "react"
 
 const nodes = [
   { id: 1, x: 20, y: 30, label: "Ideas", size: 40 },
@@ -29,6 +30,15 @@ export function SecondBrainSection() {
 
   return (
     <section className="relative py-24 overflow-hidden">
+      {/* AI Overview Button */}
+      <AIOverviewButton
+        sectionId="second-brain"
+        sectionTitle="Your Second Brain"
+        sectionContext="This section explains how Notion connects all your ideas, notes, tasks, and projects in one intelligent workspace. Everything is linked, searchable, and powered by AI. Key benefits include connected knowledge, AI that understands context, and instant search across all content."
+        position="top-right"
+        allowQuestions={true}
+      />
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Content */}

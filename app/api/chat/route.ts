@@ -9,7 +9,7 @@ When discussing features, emphasize AI agents, knowledge graphs, and seamless co
 
 export async function POST(req: NextRequest) {
   try {
-    const { message } = await req.json()
+    const { message, systemPrompt } = await req.json()
 
     if (!OPENROUTER_API_KEY) {
       return NextResponse.json(
@@ -17,6 +17,9 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       )
     }
+
+    // Use custom system prompt if provided, otherwise use default
+    const finalSystemPrompt = systemPrompt || SYSTEM_PROMPT
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -29,10 +32,10 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: "openai/gpt-4o-mini",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: finalSystemPrompt },
           { role: "user", content: message }
         ],
-        max_tokens: 150,
+        max_tokens: 200,
         temperature: 0.7
       })
     })

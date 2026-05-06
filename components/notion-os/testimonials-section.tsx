@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { Quote, Star, Users, Award, TrendingUp } from "lucide-react"
+import { AIOverviewButton } from "./ai-overview-button"
 
 const testimonials = [
   {
@@ -42,6 +43,15 @@ const stats = [
 export function TestimonialsSection() {
   return (
     <section className="relative py-24 overflow-hidden">
+      {/* AI Overview Button */}
+      <AIOverviewButton
+        sectionId="testimonials"
+        sectionTitle="Customer Stories"
+        sectionContext="This section features testimonials from teams at OpenAI, Ramp, and other companies using Notion. It also showcases key stats: 100M+ users worldwide, #1 knowledge base 3 years running, 62% of Fortune 100 companies, and 1.4M+ community members."
+        position="top-right"
+        allowQuestions={false}
+      />
+      
       {/* Background accent */}
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-accent/5" />
 

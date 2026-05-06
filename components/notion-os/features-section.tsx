@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { FileText, FolderKanban, Database, Calendar, Globe, Users, Workflow, Lock } from "lucide-react"
+import { AIOverviewButton } from "./ai-overview-button"
 
 const features = [
   {
@@ -57,6 +58,15 @@ const features = [
 export function FeaturesSection() {
   return (
     <section className="relative py-24 overflow-hidden">
+      {/* AI Overview Button */}
+      <AIOverviewButton
+        sectionId="features"
+        sectionTitle="Bring all your work together"
+        sectionContext="This section showcases Notion's core products: Docs for document creation, Projects for task management, Wikis for team knowledge, Calendar for scheduling, Sites for publishing, Teamspaces for collaboration, Automations for workflows, and Enterprise Security features."
+        position="top-right"
+        allowQuestions={true}
+      />
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <motion.div
