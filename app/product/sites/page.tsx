@@ -7,6 +7,7 @@ import { Navbar } from "@/components/notion-os/navbar"
 import { Footer } from "@/components/notion-os/footer"
 import { PageAIAssistant } from "@/components/notion-os/page-ai-assistant"
 import { AIOverviewButton } from "@/components/notion-os/ai-overview-button"
+import { VoiceNavAgent } from "@/components/notion-os/voice-nav-agent"
 
 const steps = [
   {
@@ -293,6 +294,7 @@ export default function SitesProductPage() {
         accentColor="pink"
         pageContext="Notion Sites product page. 3-step process: make a page, personalize (domain, theme, favicon), publish instantly. 10,000+ templates for personal sites, event pages, travel guides, job boards, help centers. Features: instant editing, custom domains, SEO built-in, no code required. Included in Plus, Business, and Enterprise plans."
       />
+      <VoiceNavAgent />
     </div>
   )
 }

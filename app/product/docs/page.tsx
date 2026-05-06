@@ -7,6 +7,7 @@ import { Navbar } from "@/components/notion-os/navbar"
 import { Footer } from "@/components/notion-os/footer"
 import { PageAIAssistant } from "@/components/notion-os/page-ai-assistant"
 import { AIOverviewButton } from "@/components/notion-os/ai-overview-button"
+import { VoiceNavAgent } from "@/components/notion-os/voice-nav-agent"
 
 const contentTypes = [
   { icon: Code, title: "Code snippets", description: "Native syntax highlighting for dozens of languages." },
@@ -344,6 +345,7 @@ export default function DocsProductPage() {
         accentColor="blue"
         pageContext="Notion Docs product page. Features: 50+ content types (code snippets, toggles, images/videos, table of contents, charts, embeds). Collaboration: real-time co-editing, @mentions, comments, granular permissions. Use cases: PMs (roadmaps and goals), designers (reviews and deadlines), engineers (sprints, code guidelines, bugs). Integrations: Figma, GitHub, Slack, Jira, Amplitude. Free to start."
       />
+      <VoiceNavAgent />
     </div>
   )
 }

@@ -8,6 +8,7 @@ import { Navbar } from "@/components/notion-os/navbar"
 import { Footer } from "@/components/notion-os/footer"
 import { PageAIAssistant } from "@/components/notion-os/page-ai-assistant"
 import { AIOverviewButton } from "@/components/notion-os/ai-overview-button"
+import { VoiceNavAgent } from "@/components/notion-os/voice-nav-agent"
 
 const capabilities = [
   {
@@ -369,6 +370,7 @@ export default function AIProductPage() {
         accentColor="purple"
         pageContext="Notion AI product page. Features: Notion Agent (multi-step autonomous tasks), Custom Agents (automate repetitive work, $10/1000 credits), AI Meeting Notes (transcription, summaries, action items, no bot needed), Enterprise Search (search Slack, GitHub, more). Security: no data training, SOC 2, ISO 27001, GDPR, CCPA, HIPAA, zero LLM retention for Enterprise. Use cases: onboarding, roadmap planning, weekly reporting, feedback triage, Slack support, security alerts."
       />
+      <VoiceNavAgent />
     </div>
   )
 }

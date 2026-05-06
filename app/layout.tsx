@@ -8,8 +8,23 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: 'Notion OS - The AI Workspace That Works For You',
-  description: 'Your connected workspace where AI agents, docs, projects, and teams come together. One tool to run your entire company.',
+  description: 'Your connected workspace where AI agents, docs, projects, and teams come together. Redesigned with Glassmorphism + Terminalcore aesthetics, powered by ElevenLabs voice AI.',
   generator: 'v0.app',
+  keywords: ['Notion', 'AI workspace', 'ElevenLabs', 'voice AI', 'productivity', 'project management', 'Glassmorphism'],
+  authors: [{ name: 'Shivam Kumar' }],
+  creator: 'Shivam Kumar',
+  openGraph: {
+    type: 'website',
+    title: 'Notion OS - The AI Workspace That Works For You',
+    description: 'A futuristic redesign of Notion.com with voice-powered AI navigation, ElevenLabs conversational agents, and Glassmorphism + Terminalcore aesthetics. Built with v0.app.',
+    siteName: 'Notion OS',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Notion OS - AI Workspace Redesigned',
+    description: 'Experience the future of productivity with voice AI, conversational navigation, and a stunning Glassmorphism interface.',
+    creator: '@shivamkumar',
+  },
   icons: {
     icon: [
       {
@@ -35,8 +50,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className="font-sans antialiased">
+    <html lang="en" className="bg-background">
+      <body className="font-sans antialiased bg-background text-foreground">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

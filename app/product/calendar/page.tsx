@@ -8,6 +8,7 @@ import { Navbar } from "@/components/notion-os/navbar"
 import { Footer } from "@/components/notion-os/footer"
 import { PageAIAssistant } from "@/components/notion-os/page-ai-assistant"
 import { AIOverviewButton } from "@/components/notion-os/ai-overview-button"
+import { VoiceNavAgent } from "@/components/notion-os/voice-nav-agent"
 
 const features = [
   {
@@ -282,6 +283,7 @@ export default function CalendarProductPage() {
         accentColor="green"
         pageContext="Notion Calendar product page. Features: unified time management, Notion workspace integration (database items alongside events), multi-calendar support (work + personal), Google Calendar and Apple iCloud sync. Available on Mac, Windows, iOS, and Android. Completely free for all users."
       />
+      <VoiceNavAgent />
     </div>
   )
 }

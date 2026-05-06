@@ -7,6 +7,7 @@ import { Navbar } from "@/components/notion-os/navbar"
 import { Footer } from "@/components/notion-os/footer"
 import { PageAIAssistant } from "@/components/notion-os/page-ai-assistant"
 import { AIOverviewButton } from "@/components/notion-os/ai-overview-button"
+import { VoiceNavAgent } from "@/components/notion-os/voice-nav-agent"
 import { useState } from "react"
 
 const categories = [
@@ -295,6 +296,7 @@ export default function TemplatesPage() {
         accentColor="cyan"
         pageContext="Notion Templates page. 30,000+ templates across categories: Work, Personal, Education, Engineering, Design, Teams. Featured templates: Product Roadmap (125K+), Meeting Notes (89K+), Personal Wiki (67K+), Sprint Planning (45K+), Team Wiki (78K+). Featured creators include Abdo Karmalla (101 templates), Mindful Yesmads (24), Laura Miller (13). Certified consulting partners available for 1:1 help."
       />
+      <VoiceNavAgent />
     </div>
   )
 }
