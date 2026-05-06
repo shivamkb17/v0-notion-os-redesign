@@ -16,7 +16,6 @@ import { Footer } from "@/components/notion-os/footer"
 import { VoiceTour } from "@/components/notion-os/voice-tour"
 import { CursorGlow } from "@/components/notion-os/cursor-glow"
 import { AnimatedBackground } from "@/components/notion-os/animated-background"
-import { VoiceNavAgent } from "@/components/notion-os/voice-nav-agent"
 
 export default function HomePage() {
   const [bootComplete, setBootComplete] = useState(false)
@@ -46,7 +45,6 @@ export default function HomePage() {
             </main>
             <Footer />
             <VoiceTour />
-            <VoiceNavAgent />
           </motion.div>
         )}
       </AnimatePresence>
