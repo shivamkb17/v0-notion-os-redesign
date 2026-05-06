@@ -5,6 +5,7 @@ import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X, ChevronDown, Sparkles, FileText, FolderKanban, Calendar, Globe, Bot } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { NotionLogo } from "./notion-logo"
 
 const products = [
   { name: "Notion AI", description: "Your AI-powered assistant", icon: Sparkles, href: "/product/ai" },
@@ -29,10 +30,7 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center transition-all group-hover:glow-primary">
-              <span className="text-sm font-bold text-primary-foreground">N</span>
-            </div>
-            <span className="text-lg font-semibold text-foreground">Notion</span>
+            <NotionLogo size="sm" variant="full" />
             <span className="text-xs font-mono text-primary px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20">OS</span>
           </Link>
 

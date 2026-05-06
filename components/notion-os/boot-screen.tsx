@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Volume2, Zap, Cpu, Database, Wifi, Shield, Terminal } from "lucide-react"
+import { NotionLogoInline } from "./notion-logo"
 
 const BOOT_MESSAGES = [
   { text: "Initializing Notion OS...", icon: Terminal, color: "cyan" },
@@ -576,9 +577,7 @@ export function BootScreen({ onComplete }: BootScreenProps) {
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="relative"
             >
-              <div className="h-24 w-24 rounded-2xl bg-white flex items-center justify-center shadow-2xl shadow-purple-500/30 p-3">
-                <img src="/notion-logo.svg" alt="Notion" className="w-full h-full" />
-              </div>
+              <NotionLogoInline size={96} className="shadow-2xl shadow-purple-500/30" />
               <motion.div
                 className="absolute -inset-3 rounded-3xl"
                 style={{

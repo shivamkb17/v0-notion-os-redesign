@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { motion } from "framer-motion"
 import { Globe, Twitter, Linkedin, Youtube, Github } from "lucide-react"
+import { NotionLogo } from "./notion-logo"
 
 const footerLinks = {
   Product: [
@@ -51,10 +51,7 @@ export function Footer() {
           {/* Logo and description */}
           <div className="col-span-2 md:col-span-4 lg:col-span-1 mb-8 lg:mb-0">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <span className="text-sm font-bold text-primary-foreground">N</span>
-              </div>
-              <span className="text-lg font-semibold text-foreground">Notion</span>
+              <NotionLogo size="sm" variant="full" />
             </Link>
             <p className="text-sm text-muted-foreground mb-4">
               The AI workspace that works for you.
