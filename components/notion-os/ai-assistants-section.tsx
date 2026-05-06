@@ -38,16 +38,6 @@ const participants = [
 export function AIAssistantsSection() {
   return (
     <section className="relative py-24 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0d1339] via-[#0a1628] to-[#0d1339]" />
-      
-      {/* Animated grid */}
-      <div className="absolute inset-0 opacity-[0.03]">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `linear-gradient(rgba(6, 182, 212, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(6, 182, 212, 0.3) 1px, transparent 1px)`,
-          backgroundSize: '60px 60px'
-        }} />
-      </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6">
         {/* Section Header */}
