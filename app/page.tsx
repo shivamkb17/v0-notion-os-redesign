@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { BootScreen } from "@/components/notion-os/boot-screen"
 import { Navbar } from "@/components/notion-os/navbar"
 import { HeroSection } from "@/components/notion-os/hero-section"
-import { AgentsSection } from "@/components/notion-os/agents-section"
+import { AgentCommandCenter } from "@/components/notion-os/agent-command-center"
 import { AISection } from "@/components/notion-os/ai-section"
 import { FeaturesSection } from "@/components/notion-os/features-section"
 import { SecondBrainSection } from "@/components/notion-os/second-brain-section"
@@ -35,7 +35,7 @@ export default function HomePage() {
             <Navbar />
             <main>
               <HeroSection />
-              <AgentsSection />
+              <AgentCommandCenter />
               <AISection />
               <FeaturesSection />
               <SecondBrainSection />
