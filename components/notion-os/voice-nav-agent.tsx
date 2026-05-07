@@ -420,11 +420,7 @@ Notion has: AI Agents, Docs, Projects, Calendar, Sites, Templates, Enterprise se
                     </>
                   )}
 
-                  {isListening ? (
-                    <MicOff className="h-8 w-8 text-red-400" />
-                  ) : (
-                    <Mic className="h-8 w-8 text-cyan-400" />
-                  )}
+
                 </motion.button>
 
                 <p className="text-sm text-white/50">
