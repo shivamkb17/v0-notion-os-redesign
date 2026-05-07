@@ -14,6 +14,7 @@ import { TestimonialsSection } from "@/components/notion-os/testimonials-section
 import { CTASection } from "@/components/notion-os/cta-section"
 import { Footer } from "@/components/notion-os/footer"
 import { VoiceTour } from "@/components/notion-os/voice-tour"
+import { NotionAssistantWidget } from "@/components/notion-os/notion-assistant-widget"
 import { CursorGlow } from "@/components/notion-os/cursor-glow"
 import { AnimatedBackground } from "@/components/notion-os/animated-background"
 
@@ -45,6 +46,7 @@ export default function HomePage() {
             </main>
             <Footer />
             <VoiceTour />
+            <NotionAssistantWidget />
           </motion.div>
         )}
       </AnimatePresence>
