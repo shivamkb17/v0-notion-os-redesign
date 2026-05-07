@@ -120,22 +120,21 @@ export function VoiceNavAgent({ onNavigate }: VoiceNavAgentProps) {
     }
   }, [isListening])
 
+  // Store textInput in ref for use in event handler without causing re-creation
+  const textInputRef = useRef(textInput)
+  textInputRef.current = textInput
+
   // Handle spacebar press-and-hold for voice recording
   const handleInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Enter key submits text input
-    if (e.key === "Enter") {
-      handleTextSubmit()
-      return
-    }
-    
     // Only handle spacebar when input is empty and not already held
-    if (e.key === " " && !spacebarHeldRef.current && textInput.trim() === "") {
+    if (e.key === " " && !spacebarHeldRef.current && textInputRef.current.trim() === "") {
       e.preventDefault() // Prevent space from being typed
       spacebarHeldRef.current = true
       setIsSpacebarHeld(true)
       startListening()
     }
-  }, [textInput, startListening])
+    // Note: Enter key is handled directly in the input's onKeyDown to avoid circular dependency
+  }, [startListening])
 
   const handleInputKeyUp = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     // Release spacebar stops recording
@@ -146,15 +145,6 @@ export function VoiceNavAgent({ onNavigate }: VoiceNavAgentProps) {
       stopListening()
     }
   }, [stopListening])
-
-  // Handle text submit - moved before handleInputKeyDown to avoid reference issues
-  const handleTextSubmit = useCallback(() => {
-    if (textInput.trim()) {
-      setTranscript(textInput)
-      handleUserInput(textInput)
-      setTextInput("")
-    }
-  }, [textInput, handleUserInput])
 
   // Detect navigation intent from user input with improved matching
   const detectNavigation = useCallback((text: string): { path: string; label: string } | null => {
@@ -305,6 +295,15 @@ Notion has: AI Agents, Docs, Projects, Calendar, Sites, Templates, Enterprise se
       setIsProcessing(false)
     }
   }, [isProcessing, detectNavigation, pathname, speakText, router, onNavigate])
+
+  // Handle text submit - defined after handleUserInput to avoid reference issues
+  const handleTextSubmit = useCallback(() => {
+    if (textInput.trim()) {
+      setTranscript(textInput)
+      handleUserInput(textInput)
+      setTextInput("")
+    }
+  }, [textInput, handleUserInput])
 
   return (
     <>
@@ -571,7 +570,18 @@ Notion has: AI Agents, Docs, Projects, Calendar, Sites, Templates, Enterprise se
                     type="text"
                     value={textInput}
                     onChange={(e) => setTextInput(e.target.value)}
-                    onKeyDown={handleInputKeyDown}
+                    onKeyDown={(e) => {
+                      // Handle Enter key for text submit
+                      if (e.key === "Enter" && textInput.trim()) {
+                        e.preventDefault()
+                        setTranscript(textInput)
+                        handleUserInput(textInput)
+                        setTextInput("")
+                        return
+                      }
+                      // Handle spacebar for voice recording
+                      handleInputKeyDown(e)
+                    }}
                     onKeyUp={handleInputKeyUp}
                     onFocus={() => setInputFocused(true)}
                     onBlur={() => {
