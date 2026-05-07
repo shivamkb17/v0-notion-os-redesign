@@ -7,21 +7,30 @@ import { Mic, MicOff, X, Volume2, Send, Loader2, Navigation, ChevronRight, Spark
 import { Button } from "@/components/ui/button"
 
 const SITE_MAP = [
-  { path: "/", keywords: ["home", "landing", "main", "start", "homepage"], label: "Home" },
-  { path: "/pricing", keywords: ["pricing", "price", "plans", "cost", "how much", "subscription", "free", "plus", "business", "enterprise plan"], label: "Pricing" },
-  { path: "/product/ai", keywords: ["ai", "artificial intelligence", "notion ai", "agents", "assistant", "automation"], label: "Notion AI" },
-  { path: "/product/docs", keywords: ["docs", "documents", "writing", "wiki", "notes", "editor"], label: "Docs" },
-  { path: "/product/projects", keywords: ["projects", "project management", "tasks", "sprints", "kanban", "timeline"], label: "Projects" },
-  { path: "/product/calendar", keywords: ["calendar", "scheduling", "time", "meetings", "events"], label: "Calendar" },
-  { path: "/product/sites", keywords: ["sites", "publish", "website", "portfolio", "hosting"], label: "Sites" },
-  { path: "/templates", keywords: ["templates", "template", "gallery", "marketplace"], label: "Templates" },
-  { path: "/enterprise", keywords: ["enterprise", "security", "compliance", "sso", "admin", "corporate"], label: "Enterprise" },
+  { path: "/", keywords: ["home", "landing", "main", "start", "homepage", "beginning", "front page", "index"], label: "Home", priority: 1 },
+  { path: "/pricing", keywords: ["pricing", "price", "prices", "plans", "plan", "cost", "costs", "how much", "subscription", "subscriptions", "free", "plus", "business plan", "pay", "payment", "buy", "purchase", "tiers", "tier"], label: "Pricing", priority: 2 },
+  { path: "/product/ai", keywords: ["ai", "artificial intelligence", "notion ai", "agents", "agent", "assistant", "automation", "automate", "intelligent", "smart", "machine learning"], label: "Notion AI", priority: 3 },
+  { path: "/product/docs", keywords: ["docs", "doc", "documents", "document", "writing", "wiki", "wikis", "notes", "note", "editor", "write", "documentation"], label: "Docs", priority: 4 },
+  { path: "/product/projects", keywords: ["projects", "project", "project management", "tasks", "task", "sprints", "sprint", "kanban", "timeline", "timelines", "roadmap", "roadmaps", "manage"], label: "Projects", priority: 5 },
+  { path: "/product/calendar", keywords: ["calendar", "calendars", "scheduling", "schedule", "time", "meetings", "meeting", "events", "event", "appointments", "appointment", "date", "dates"], label: "Calendar", priority: 6 },
+  { path: "/product/sites", keywords: ["sites", "site", "publish", "publishing", "website", "websites", "portfolio", "portfolios", "hosting", "host", "webpage", "webpages", "web page"], label: "Sites", priority: 7 },
+  { path: "/templates", keywords: ["templates", "template", "gallery", "galleries", "marketplace", "examples", "example", "starter", "starters", "prebuilt", "pre-built"], label: "Templates", priority: 8 },
+  { path: "/enterprise", keywords: ["enterprise", "enterprises", "security", "secure", "compliance", "compliant", "sso", "admin", "administration", "corporate", "corporation", "business", "companies", "company", "organization"], label: "Enterprise", priority: 9 },
+]
+
+// Navigation intent verbs that signal user wants to navigate
+const NAV_INTENT_VERBS = [
+  "go to", "take me to", "navigate to", "open", "show me", "show", "bring me to",
+  "i want to see", "i'd like to see", "can you show", "let me see", "visit",
+  "head to", "jump to", "switch to", "move to", "get to", "access", "view",
+  "what about", "tell me about", "learn about", "explore"
 ]
 
 const QUICK_COMMANDS = [
-  { text: "Take me to pricing", icon: Navigation },
-  { text: "Show me Notion AI features", icon: Sparkles },
-  { text: "What products do you offer?", icon: ChevronRight },
+  { text: "Go to pricing", icon: Navigation },
+  { text: "Show me Notion AI", icon: Sparkles },
+  { text: "Open templates", icon: ChevronRight },
+  { text: "Take me to enterprise", icon: Navigation },
 ]
 
 interface VoiceNavAgentProps {
@@ -107,16 +116,47 @@ export function VoiceNavAgent({ onNavigate }: VoiceNavAgentProps) {
     }
   }, [isListening])
 
-  // Detect navigation intent from user input
+  // Detect navigation intent from user input with improved matching
   const detectNavigation = useCallback((text: string): { path: string; label: string } | null => {
-    const lower = text.toLowerCase()
+    const lower = text.toLowerCase().trim()
+    
+    // Check if user has navigation intent
+    const hasNavIntent = NAV_INTENT_VERBS.some(verb => lower.includes(verb))
+    
+    // Score-based matching for better accuracy
+    let bestMatch: { path: string; label: string; score: number } | null = null
+    
     for (const page of SITE_MAP) {
+      let score = 0
+      
       for (const keyword of page.keywords) {
-        if (lower.includes(keyword)) {
-          return { path: page.path, label: page.label }
+        // Exact word boundary match (higher score)
+        const wordBoundaryRegex = new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
+        if (wordBoundaryRegex.test(lower)) {
+          score += 10
+        }
+        // Partial match (lower score)
+        else if (lower.includes(keyword)) {
+          score += 5
         }
       }
+      
+      // Boost score if user has navigation intent
+      if (hasNavIntent && score > 0) {
+        score += 5
+      }
+      
+      // Update best match
+      if (score > 0 && (!bestMatch || score > bestMatch.score)) {
+        bestMatch = { path: page.path, label: page.label, score }
+      }
     }
+    
+    // Return match if score is above threshold
+    if (bestMatch && bestMatch.score >= 5) {
+      return { path: bestMatch.path, label: bestMatch.label }
+    }
+    
     return null
   }, [])
 
@@ -159,6 +199,9 @@ export function VoiceNavAgent({ onNavigate }: VoiceNavAgentProps) {
 
     // Check for navigation intent
     const navTarget = detectNavigation(text)
+    console.log("[v0] Voice Nav - Input:", text)
+    console.log("[v0] Voice Nav - Detected target:", navTarget)
+    console.log("[v0] Voice Nav - Current path:", pathname)
 
     try {
       const res = await fetch("/api/chat", {
@@ -204,18 +247,26 @@ Notion has: AI Agents, Docs, Projects, Calendar, Sites, Templates, Enterprise se
 
       // Auto-navigate after voice finishes
       if (navTarget && navTarget.path !== pathname) {
+        console.log("[v0] Voice Nav - Navigating to:", navTarget.path)
         setTimeout(() => {
+          // Close the panel before navigating
+          setIsOpen(false)
+          // Use router.push for client-side navigation
           router.push(navTarget.path)
           onNavigate?.(navTarget.path)
+          // Reset state after navigation
           setTimeout(() => {
             setNavigationTarget(null)
             setResponse("")
             setTranscript("")
             setTextInput("")
-          }, 500)
-        }, 1500)
+          }, 300)
+        }, 1200) // Reduced delay for faster navigation
+      } else if (navTarget && navTarget.path === pathname) {
+        console.log("[v0] Voice Nav - Already on page:", navTarget.path)
       }
-    } catch {
+    } catch (error) {
+      console.error("[v0] Voice Nav - Error:", error)
       setResponse("I had trouble processing that. Please try again.")
     } finally {
       setIsProcessing(false)
