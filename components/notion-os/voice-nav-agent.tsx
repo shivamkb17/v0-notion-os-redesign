@@ -49,9 +49,13 @@ export function VoiceNavAgent({ onNavigate }: VoiceNavAgentProps) {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [navigationTarget, setNavigationTarget] = useState<{ path: string; label: string } | null>(null)
   const [pulseActive, setPulseActive] = useState(false)
+  const [isSpacebarHeld, setIsSpacebarHeld] = useState(false)
+  const [inputFocused, setInputFocused] = useState(false)
 
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const inputRef = useRef<HTMLInputElement | null>(null)
+  const spacebarHeldRef = useRef(false) // Track actual spacebar state to prevent multiple triggers
 
   // Initialize speech recognition
   useEffect(() => {
@@ -115,6 +119,42 @@ export function VoiceNavAgent({ onNavigate }: VoiceNavAgentProps) {
       setIsListening(false)
     }
   }, [isListening])
+
+  // Handle spacebar press-and-hold for voice recording
+  const handleInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Enter key submits text input
+    if (e.key === "Enter") {
+      handleTextSubmit()
+      return
+    }
+    
+    // Only handle spacebar when input is empty and not already held
+    if (e.key === " " && !spacebarHeldRef.current && textInput.trim() === "") {
+      e.preventDefault() // Prevent space from being typed
+      spacebarHeldRef.current = true
+      setIsSpacebarHeld(true)
+      startListening()
+    }
+  }, [textInput, startListening])
+
+  const handleInputKeyUp = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Release spacebar stops recording
+    if (e.key === " " && spacebarHeldRef.current) {
+      e.preventDefault()
+      spacebarHeldRef.current = false
+      setIsSpacebarHeld(false)
+      stopListening()
+    }
+  }, [stopListening])
+
+  // Handle text submit - moved before handleInputKeyDown to avoid reference issues
+  const handleTextSubmit = useCallback(() => {
+    if (textInput.trim()) {
+      setTranscript(textInput)
+      handleUserInput(textInput)
+      setTextInput("")
+    }
+  }, [textInput, handleUserInput])
 
   // Detect navigation intent from user input with improved matching
   const detectNavigation = useCallback((text: string): { path: string; label: string } | null => {
@@ -199,9 +239,6 @@ export function VoiceNavAgent({ onNavigate }: VoiceNavAgentProps) {
 
     // Check for navigation intent
     const navTarget = detectNavigation(text)
-    console.log("[v0] Voice Nav - Input:", text)
-    console.log("[v0] Voice Nav - Detected target:", navTarget)
-    console.log("[v0] Voice Nav - Current path:", pathname)
 
     try {
       const res = await fetch("/api/chat", {
@@ -247,7 +284,6 @@ Notion has: AI Agents, Docs, Projects, Calendar, Sites, Templates, Enterprise se
 
       // Auto-navigate after voice finishes
       if (navTarget && navTarget.path !== pathname) {
-        console.log("[v0] Voice Nav - Navigating to:", navTarget.path)
         setTimeout(() => {
           // Close the panel before navigating
           setIsOpen(false)
@@ -262,24 +298,13 @@ Notion has: AI Agents, Docs, Projects, Calendar, Sites, Templates, Enterprise se
             setTextInput("")
           }, 300)
         }, 1200) // Reduced delay for faster navigation
-      } else if (navTarget && navTarget.path === pathname) {
-        console.log("[v0] Voice Nav - Already on page:", navTarget.path)
       }
-    } catch (error) {
-      console.error("[v0] Voice Nav - Error:", error)
+    } catch {
       setResponse("I had trouble processing that. Please try again.")
     } finally {
       setIsProcessing(false)
     }
   }, [isProcessing, detectNavigation, pathname, speakText, router, onNavigate])
-
-  const handleTextSubmit = () => {
-    if (textInput.trim()) {
-      setTranscript(textInput)
-      handleUserInput(textInput)
-      setTextInput("")
-    }
-  }
 
   return (
     <>
@@ -405,10 +430,12 @@ Notion has: AI Agents, Docs, Projects, Calendar, Sites, Templates, Enterprise se
 
                 <p className="text-sm text-white/50">
                   {isListening
-                    ? "Listening... speak now"
+                    ? isSpacebarHeld
+                      ? "Recording... release SPACE when done"
+                      : "Listening... speak now"
                     : isProcessing
                     ? "Processing..."
-                    : "Tap to speak or type below"}
+                    : "Tap mic, or hold SPACE in input below"}
                 </p>
 
                 {/* Live transcript */}
@@ -503,16 +530,62 @@ Notion has: AI Agents, Docs, Projects, Calendar, Sites, Templates, Enterprise se
                 </div>
               )}
 
-              {/* Text Input */}
+              {/* Text Input with Spacebar Voice Recording */}
               <div className="px-5 pb-5 pt-2 border-t border-white/5">
-                <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2.5 border border-white/10 focus-within:border-cyan-500/30 transition-colors">
+                <div className={`relative flex items-center gap-2 rounded-xl px-3 py-2.5 border transition-all ${
+                  isSpacebarHeld 
+                    ? "bg-red-500/10 border-red-500/40" 
+                    : inputFocused 
+                    ? "bg-white/5 border-cyan-500/30" 
+                    : "bg-white/5 border-white/10"
+                }`}>
+                  {/* Spacebar recording indicator */}
+                  {isSpacebarHeld && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-500/30"
+                    >
+                      <motion.div
+                        className="w-2 h-2 rounded-full bg-red-400"
+                        animate={{ opacity: [1, 0.3, 1] }}
+                        transition={{ duration: 0.6, repeat: Infinity }}
+                      />
+                      <span className="text-xs text-red-400 font-mono">Recording...</span>
+                    </motion.div>
+                  )}
+                  
+                  {/* Mic icon indicator */}
+                  <div className={`flex-shrink-0 ${isSpacebarHeld ? "text-red-400" : "text-white/30"}`}>
+                    {isSpacebarHeld ? (
+                      <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 0.3, repeat: Infinity }}>
+                        <MicOff className="h-4 w-4" />
+                      </motion.div>
+                    ) : (
+                      <Mic className="h-4 w-4" />
+                    )}
+                  </div>
+                  
                   <input
+                    ref={inputRef}
                     type="text"
                     value={textInput}
                     onChange={(e) => setTextInput(e.target.value)}
-                    placeholder="Or type your command..."
+                    onKeyDown={handleInputKeyDown}
+                    onKeyUp={handleInputKeyUp}
+                    onFocus={() => setInputFocused(true)}
+                    onBlur={() => {
+                      setInputFocused(false)
+                      // Stop recording if user clicks away while holding spacebar
+                      if (spacebarHeldRef.current) {
+                        spacebarHeldRef.current = false
+                        setIsSpacebarHeld(false)
+                        stopListening()
+                      }
+                    }}
+                    placeholder={inputFocused ? "Hold SPACE to record, or type..." : "Or type your command..."}
                     className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 outline-none"
-                    onKeyDown={(e) => e.key === "Enter" && handleTextSubmit()}
+                    disabled={isProcessing}
                   />
                   <Button
                     size="sm"
@@ -523,9 +596,19 @@ Notion has: AI Agents, Docs, Projects, Calendar, Sites, Templates, Enterprise se
                     {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   </Button>
                 </div>
-                <p className="text-[10px] text-white/20 mt-2 text-center font-mono">
-                  Speech-to-Text + ElevenLabs TTS + OpenRouter AI
-                </p>
+                
+                {/* Keyboard hint */}
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <div className="flex items-center gap-1.5">
+                    <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-white/5 border border-white/10 rounded text-white/40">SPACE</kbd>
+                    <span className="text-[10px] text-white/30">hold to record</span>
+                  </div>
+                  <span className="text-white/20">|</span>
+                  <div className="flex items-center gap-1.5">
+                    <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-white/5 border border-white/10 rounded text-white/40">ENTER</kbd>
+                    <span className="text-[10px] text-white/30">send</span>
+                  </div>
+                </div>
               </div>
             </motion.div>
           </>
